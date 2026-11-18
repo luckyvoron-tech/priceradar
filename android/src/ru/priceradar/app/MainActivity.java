@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
     private final Map<String, Runnable> timeouts = new ConcurrentHashMap<>();
     private final Map<String, Boolean> delivered = new ConcurrentHashMap<>();
     private volatile boolean destroyed = false;
+    private String pendingShare = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +111,11 @@ public class MainActivity extends Activity {
                 openExternal(uri);
                 return true;
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                deliverShare();
+            }
         });
 
         CookieManager.getInstance().setAcceptCookie(true);
@@ -124,6 +130,33 @@ public class MainActivity extends Activity {
         } else {
             webView.loadUrl(APP_URL);
         }
+
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return;
+        String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (text == null) text = intent.getStringExtra(Intent.EXTRA_SUBJECT);
+        if (text == null || text.trim().isEmpty()) return;
+        pendingShare = text;
+        deliverShare();
+    }
+
+    private void deliverShare() {
+        if (pendingShare == null || webView == null || destroyed) return;
+        final String text = pendingShare;
+        pendingShare = null;
+        try {
+            webView.evaluateJavascript("window.__prShared(" + JSONObject.quote(text) + ")", null);
+        } catch (Exception ignored) { }
     }
 
     @Override
@@ -292,6 +325,15 @@ public class MainActivity extends Activity {
             handler.post(new Runnable() {
                 @Override public void run() { requestNotificationPermission(); }
             });
+        }
+
+        @JavascriptInterface
+        public String version() {
+            try {
+                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Exception e) {
+                return "1.0";
+            }
         }
 
         @JavascriptInterface

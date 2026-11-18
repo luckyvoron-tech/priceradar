@@ -64,7 +64,7 @@ const UI = (() => {
     </div>`;
   }
 
-  const LABELS = { wildberries: "Wildberries", ozon: "Ozon", ymarket: "Яндекс Маркет" };
+  const LABELS = { wildberries: "Wildberries", ozon: "Ozon", ymarket: "Яндекс Маркет", magnit: "М.Косметик" };
   function label(mp) { return LABELS[mp] || mp; }
 
   function offerById(url) {
@@ -140,9 +140,53 @@ const UI = (() => {
     }
   }
 
-  async function doSearch() {
-    const q = $("q").value.trim();
+  function renderHistory() {
+    const h = Store.history();
+    const el = $("history");
+    if (!h.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="history-head"><span>Недавние</span><button id="history-clear">Очистить</button></div><div class="chips">` +
+      h.map((q) => `<button class="chip" data-h="${esc(q)}">${esc(q)}</button>`).join("") + `</div>`;
+    el.querySelectorAll("[data-h]").forEach((b) => b.addEventListener("click", () => {
+      $("q").value = b.getAttribute("data-h");
+      doSearch();
+    }));
+    $("history-clear").addEventListener("click", () => { Store.clearHistory(); renderHistory(); });
+  }
+
+  function cmpVer(a, b) {
+    const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
+    const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const d = (pa[i] || 0) - (pb[i] || 0);
+      if (d) return d;
+    }
+    return 0;
+  }
+
+  async function checkUpdate() {
+    let cur = "1.0";
+    try { if (window.AndroidBridge && window.AndroidBridge.version) cur = window.AndroidBridge.version(); } catch (e) {}
+    try {
+      const r = await fetch("https://api.github.com/repos/luckyvoron-tech/priceradar/releases/latest", {
+        headers: { "Accept": "application/vnd.github+json" },
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const tag = String(j.tag_name || "").replace(/^v/, "");
+      if (tag && cmpVer(tag, cur) > 0 && Store.dismissedUpdate() !== tag) {
+        $("update-ver").textContent = tag;
+        $("update").classList.remove("hidden");
+        $("update-go").onclick = () => openUrl(j.html_url || "https://github.com/luckyvoron-tech/priceradar/releases/latest");
+        $("update-close").onclick = () => { Store.dismissUpdate(tag); $("update").classList.add("hidden"); };
+      }
+    } catch (e) {}
+  }
+
+  async function doSearch(qArg) {
+    const q = String(qArg || $("q").value).trim();
     if (q.length < 3 || state.busy) return;
+    Store.addHistory(q);
+    renderHistory();
     state.busy = true;
     $("seed-card").innerHTML = "";
     $("results").innerHTML = "";
@@ -342,7 +386,7 @@ const UI = (() => {
     Store.load();
     document.querySelectorAll("#tabs .tab").forEach((b) =>
       b.addEventListener("click", () => tab(b.dataset.tab)));
-    $("go").addEventListener("click", doSearch);
+    $("go").addEventListener("click", () => doSearch());
     $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
     document.querySelectorAll("#chips .chip").forEach((b) =>
       b.addEventListener("click", () => { $("q").value = b.dataset.q; doSearch(); }));
@@ -364,12 +408,24 @@ const UI = (() => {
     if (!Store.seenOnboarding()) $("onboarding").classList.remove("hidden");
     loadCashback();
     renderWish();
+    renderHistory();
+    setTimeout(checkUpdate, 1500);
     setTimeout(showDueWish, 1200);
     if (Store.tracks().length) setTimeout(() => refreshTracks(true), 4000);
     if (!Scrape.hasBridge()) {
       status("Это приложение работает только на телефоне: в браузере площадки блокируют запросы.", "");
     }
   }
+
+  window.__prShared = function (text) {
+    const raw = String(text || "");
+    const m = raw.match(/https?:\/\/\S+/);
+    const q = (m ? m[0] : raw).replace(/[).,;!]+$/, "").trim();
+    if (!q) return;
+    tab("search");
+    $("q").value = q;
+    doSearch(q);
+  };
 
   return { init, doSearch, toast, tab };
 })();

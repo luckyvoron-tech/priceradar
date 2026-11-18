@@ -7,6 +7,8 @@ const Store = (() => {
     cashback: {},
     onboarding: false,
     cache: {},
+    history: [],
+    dismissedUpdate: "",
   });
 
   let data = defaultData();
@@ -127,6 +129,21 @@ const Store = (() => {
     return Number((data.cashback || {})[mp] || 0);
   }
 
+  // --- история поиска ---
+  function history() { return data.history || []; }
+
+  function addHistory(q) {
+    const text = String(q || "").trim();
+    if (text.length < 2) return;
+    data.history = [text, ...(data.history || []).filter((x) => x !== text)].slice(0, 20);
+    save();
+  }
+
+  function clearHistory() { data.history = []; save(); }
+
+  function dismissUpdate(tag) { data.dismissedUpdate = tag || ""; save(); }
+  function dismissedUpdate() { return data.dismissedUpdate || ""; }
+
   // --- кэш поиска ---
   function cacheGet(key, ttlMs = 20 * 60 * 1000) {
     const hit = data.cache[key];
@@ -155,5 +172,6 @@ const Store = (() => {
     wish, addWish, wishDone, wishKeep, wishDue, wishMarkReminded,
     setCashback, getCashback, cashbackFor,
     cacheGet, cacheSet, seenOnboarding, markOnboarding, loadError: () => loadError,
+    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate,
   };
 })();

@@ -320,3 +320,29 @@ main { padding: 16px 16px 24px; }
   border-radius: 10px; font-size: 15px; text-align: center; background: #FFFDFB;
 }
 .secondary-btn.wide { width: 100%; margin-top: 10px; }
+
+/* история поиска */
+.history-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 14px 2px 4px; font-size: 13px; color: var(--muted);
+}
+.history-head button { border: 0; background: none; color: var(--primary); font-size: 13px; }
+.history .chips { padding-top: 4px; }
+.history .chip { background: #F7F2EC; border-color: transparent; }
+
+/* баннер обновления */
+.update {
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  background: #EFE9FC;
+  border: 1px solid #DED2FA;
+  border-radius: 14px;
+}
+.update.hidden { display: none; }
+.update-text { flex: 1; font-size: 13px; color: #4B3E77; }
+.update-btn {
+  border: 0; background: var(--primary); color: #fff;
+  padding: 7px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+}
+.update-close { border: 0; background: none; color: #7C6FA0; font-size: 20px; line-height: 1; }

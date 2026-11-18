@@ -214,6 +214,70 @@ const Scrape = (() => {
     return uniq.slice(0, 24);
   }
 
+  // ---------- М.Косметик (cosmetic.magnit.ru) ----------
+  async function magnitSearchExtractor(q) {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    await sleep(800);
+    const out = [];
+    const seen = new Set();
+    const links = Array.from(document.querySelectorAll('a[href*="/product/"]'));
+    for (const a of links) {
+      const href = (a.href || "").split("?")[0];
+      if (!href || seen.has(href)) continue;
+      let box = a;
+      let text = "";
+      for (let i = 0; i < 4 && box; i++) {
+        text = box.innerText || "";
+        if (/\d[\d\s]{2,}\s*₽/.test(text)) break;
+        box = box.parentElement;
+      }
+      const pm = text.match(/(\d[\d\s]{2,})\s*₽/);
+      if (!pm) continue;
+      const img = box ? box.querySelector("img") : null;
+      const title = ((a.textContent || "").trim() || (img && img.alt) || "").replace(/\s+/g, " ");
+      if (!title || title.length < 3) continue;
+      const idm = href.match(/\/product\/(\d+)/);
+      seen.add(href);
+      out.push({
+        marketplace: "magnit",
+        title: title,
+        price: Number(pm[1].replace(/[^\d]/g, "")),
+        url: href,
+        image: img ? (img.src || "") : "",
+        rating: 0,
+        reviews: 0,
+        brand: "",
+        article: idm ? idm[1] : "",
+      });
+      if (out.length >= 24) break;
+    }
+
+    if (!out.length) {
+      // запасной путь: JSON-LD
+      const walk = (x) => {
+        if (!x || typeof x !== "object") return;
+        if (Array.isArray(x)) { x.forEach(walk); return; }
+        if (x["@type"] === "ItemList") (x.itemListElement || []).forEach((el) => walk(el.item || el));
+        if (x["@type"] === "Product") {
+          const off = Array.isArray(x.offers) ? x.offers[0] : x.offers;
+          const price = Number((off && off.price) || 0);
+          if (price && x.name && x.url) {
+            out.push({
+              marketplace: "magnit", title: String(x.name), price: price,
+              url: String(x.url), image: String(x.image || ""),
+              rating: 0, reviews: 0, brand: "", article: "",
+            });
+          }
+        }
+      };
+      for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+        try { walk(JSON.parse(s.textContent)); } catch (e) {}
+      }
+    }
+    if (!out.length) throw new Error("М.Косметик: нет данных");
+    return out;
+  }
+
   // ---------- карточка по ссылке ----------
   async function productExtractor() {
     const host = location.hostname;
@@ -297,12 +361,32 @@ const Scrape = (() => {
       };
     }
 
+    if (host.includes("magnit")) {
+      const p = ldProduct();
+      if (p && p.price) return Object.assign({ marketplace: "magnit" }, p);
+      const og = document.querySelector('meta[property="og:title"]');
+      const text = document.body ? document.body.innerText : "";
+      const m = text.match(/(\d[\d\s]{2,})\s*₽/);
+      if (og && m) {
+        return {
+          marketplace: "magnit",
+          title: og.content.replace(/\s+/g, " ").trim(),
+          price: Number(m[1].replace(/[^\d]/g, "")),
+          url: location.href.split("?")[0],
+          image: "", rating: 0, reviews: 0, brand: "", article: "",
+        };
+      }
+      throw new Error("М.Косметик не отдал карточку");
+    }
+
     const p = ldProduct();
     if (!p || !p.price) throw new Error("Не удалось разобрать страницу товара");
     return Object.assign({ marketplace: "ymarket" }, p);
   }
 
   // ---------- площадки ----------
+  const COSMETIC_RE = /крем|космет|маск|шампун|помад|туш|парфюм|духи|сыворот|гель|лак|пудр|тональн|уход|бальзам|скраб|дезодор|зубн|мыло|кондиционер|макияж|блеск|карандаш|тени|румяна|хайлайтер|мицелляр|патч|маникюр|педикюр|парфюмер/i;
+
   const PLATFORMS = [
     {
       key: "wildberries", label: "Wildberries",
@@ -319,6 +403,12 @@ const Scrape = (() => {
       page: (q) => "https://market.yandex.ru/search?text=" + encodeURIComponent(q),
       search: yandexSearchExtractor,
     },
+    {
+      key: "magnit", label: "М.Косметик", beta: true,
+      when: (seed) => COSMETIC_RE.test(String(seed.title || "")),
+      page: (q) => "https://cosmetic.magnit.ru/search/?text=" + encodeURIComponent(q),
+      search: magnitSearchExtractor,
+    },
   ];
 
   function marketplaceOf(url) {
@@ -327,6 +417,7 @@ const Scrape = (() => {
       if (h.endsWith("wildberries.ru") || h === "wb.ru") return "wildberries";
       if (h.endsWith("ozon.ru")) return "ozon";
       if (h.endsWith("market.yandex.ru")) return "ymarket";
+      if (h.endsWith("cosmetic.magnit.ru") || h === "magnit.ru") return "magnit";
     } catch (e) {}
     return null;
   }
@@ -349,6 +440,7 @@ const Scrape = (() => {
     const similar = [];
     const errors = {};
     for (const p of PLATFORMS) {
+      if (p.when && !p.when(seed)) continue;
       if (onProgress) onProgress(p.label);
       try {
         const offers = await search(p.key, seed.title);
@@ -362,7 +454,7 @@ const Scrape = (() => {
           else if (m.isSimilar) similar.push(o);
         }
       } catch (e) {
-        errors[p.key] = e.message || String(e);
+        if (!p.beta) errors[p.key] = e.message || String(e);
       }
     }
     // лучшее предложение каждой площадки
@@ -385,6 +477,7 @@ const Scrape = (() => {
     }
     const errors = [];
     for (const p of PLATFORMS) {
+      if (p.when && !p.when({ title: query })) continue;
       if (onStep) onStep("Ищу на " + p.label + "…");
       try {
         const arr = await search(p.key, query);
@@ -392,7 +485,7 @@ const Scrape = (() => {
           return arr.find((o) => !Match.isRefurb(o.title)) || arr[0];
         }
       } catch (e) {
-        errors.push(p.label + ": " + (e.message || e));
+        if (!p.beta) errors.push(p.label + ": " + (e.message || e));
       }
     }
     const detail = errors.length ? " (" + errors.join("; ") + ")" : "";

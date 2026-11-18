@@ -19,6 +19,12 @@
     <p class="hero-sub">Один товар — сразу на Wildberries, Ozon и Яндекс Маркете</p>
   </header>
 
+  <div id="update" class="update hidden">
+    <div class="update-text">Вышла новая версия <b id="update-ver"></b></div>
+    <button id="update-go" class="update-btn">Скачать</button>
+    <button id="update-close" class="update-close" aria-label="Скрыть">×</button>
+  </div>
+
   <main>
     <!-- ПОИСК -->
     <section id="tab-search" class="pane active">
@@ -32,6 +38,7 @@
         <button class="chip" data-q="кроссовки Nike">Nike</button>
         <button class="chip" data-q="крем для лица">Крем</button>
       </div>
+      <div id="history"></div>
       <div id="status" class="status"></div>
       <div id="seed-card"></div>
       <div id="results"></div>
