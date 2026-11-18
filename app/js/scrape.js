@@ -111,63 +111,56 @@ const Scrape = (() => {
   // ---------- Ozon ----------
   async function ozonSearchExtractor(q) {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    if (/Antibot|Подтвердите|нет соединения/i.test(document.title)) await sleep(2500);
-    const safeQ = String(q).replace(/[&?#]/g, " ");
-    const url = "/api/composer-api.bx/page/json/v2?url="
-      + encodeURIComponent("/search/?text=" + safeQ + "&from_global=true");
-    const r = await fetch(url, { headers: { "Accept": "application/json" }, credentials: "include" });
-    if (!r.ok) throw new Error("Ozon " + r.status);
-    const j = await r.json();
+    if (/Antibot|Подтвердите|нет соединения/i.test(document.title)) await sleep(3000);
+
+    // composer-API с телефона отдаёт 403, поэтому читаем отрисованную выдачу
+    const groups = new Map();
+    for (const a of document.querySelectorAll('a[href*="/product/"]')) {
+      const href = (a.href || "").split("?")[0];
+      if (!href) continue;
+      if (!groups.has(href)) groups.set(href, []);
+      groups.get(href).push(a);
+    }
     const out = [];
-    function digits(t) { const m = String(t || "").replace(/[^\d]/g, ""); return m ? Number(m) : 0; }
-    for (const key of Object.keys(j.widgetStates || {})) {
-      if (!key.startsWith("tileGridDesktop") && !key.startsWith("searchResults")) continue;
-      let block;
-      try { block = JSON.parse(j.widgetStates[key]); } catch (e) { continue; }
-      for (const it of block.items || []) {
-        let title = "", price = 0, rating = 0;
-        for (const atom of it.mainState || []) {
-          const t = atom.type;
-          if (t === "priceV2") {
-            const arr = (atom.priceV2 && atom.priceV2.price) || [];
-            const main = arr.find((p) => p.textStyle === "PRICE") || arr[0];
-            if (main) price = digits(main.text);
-          } else if (t === "textDS") {
-            const txt = ((atom.textDS || {}).text || "").trim();
-            const token = (atom.textDS || {}).typographyToken || "";
-            if (txt && !/^[\d\s.,]+$/.test(txt) && (token === "tsBody500Medium" || txt.length > title.length)) {
-              title = txt;
-            }
-          } else if (t === "labelListV2") {
-            for (const li of (atom.labelListV2 || {}).items || []) {
-              const txt = ((li.text || {}).text || "").trim();
-              if (/^\d\.\d$/.test(txt)) rating = Number(txt);
-            }
-          }
-        }
-        let link = ((it.action || {}).link || "").split("?")[0];
-        if (link.startsWith("/")) link = "https://www.ozon.ru" + link;
-        let image = "";
-        for (const im of ((it.tileImage || {}).items || [])) {
-          const l = ((im.image || {}).link || "");
-          if (l) { image = l; break; }
-        }
-        if (!title || !price || !link) continue;
-        out.push({
-          marketplace: "ozon",
-          title: title.replace(/\s+/g, " "),
-          price: price,
-          url: link,
-          image: image,
-          rating: rating,
-          reviews: 0,
-          brand: title.split(/\s+/)[0] || "",
-          article: String(it.sku || ""),
-        });
+    for (const [href, anchors] of groups) {
+      let box = anchors[0];
+      let text = "";
+      for (let i = 0; i < 6 && box; i++) {
+        text = box.innerText || "";
+        if (/\d[\d\s\u2009\u202f]{2,}\s*₽/.test(text)) break;
+        box = box.parentElement;
       }
+      const pm = text.match(/(\d[\d\s\u2009\u202f]{2,})\s*₽/);
+      if (!pm) continue;
+
+      let title = "";
+      for (const a of anchors) {
+        const t = (a.innerText || "").replace(/\s+/g, " ").trim();
+        if (t.length > title.length && /[a-zа-яё]/.test(t)) title = t;
+      }
+      const img = box ? box.querySelector("img") : null;
+      if (!title && img) title = (img.alt || "").trim();
+      if (title.length < 5) continue;
+
+      let rating = 0;
+      const rm = text.match(/(?:^|\s)([1-5]\.\d)(?:\s|$)/);
+      if (rm) rating = Number(rm[1]);
+      const idm = href.match(/-(\d+)\/?$/);
+      out.push({
+        marketplace: "ozon",
+        title: title,
+        price: Number(pm[1].replace(/[^\d]/g, "")),
+        url: href,
+        image: img ? (img.currentSrc || img.src || "") : "",
+        rating: rating,
+        reviews: 0,
+        brand: title.split(/\s+/)[0] || "",
+        article: idm ? idm[1] : "",
+      });
+      if (out.length >= 24) break;
     }
     if (!out.length) throw new Error("Ozon: нет данных (антибот или пустая выдача)");
-    return out.slice(0, 24);
+    return out;
   }
 
   // ---------- Яндекс Маркет ----------
@@ -310,13 +303,19 @@ const Scrape = (() => {
 
     if (host.includes("ozon")) {
       const p = ldProduct() || {};
-      let price = p.price || 0;
+      let price = 0;
+      // мобильная карточка показывает цену с картой Ozon первой в тексте
+      const bodyText = document.body ? document.body.innerText : "";
+      const bm = bodyText.match(/(\d[\d\s\u2009\u202f]{2,})\s*₽/);
+      if (bm) price = Number(bm[1].replace(/[^\d]/g, ""));
       for (const el of document.querySelectorAll("[data-state]")) {
+        if (price) break;
         const st = el.getAttribute("data-state") || "";
         if (st.indexOf("cardPrice") < 0) continue;
         const m = st.match(/cardPrice"\s*:\s*"([^"]+)"/);
-        if (m) { const d = Number(m[1].replace(/[^\d]/g, "")); if (d) price = d; break; }
+        if (m) { const d = Number(m[1].replace(/[^\d]/g, "")); if (d) price = d; }
       }
+      if (!price) price = p.price || 0;
       const og = document.querySelector('meta[property="og:title"]');
       const title = (p.title || (og && og.content) || document.title).replace(/\s*\|\s*купить.*$/i, "").trim();
       if (!title || !price) throw new Error("Ozon не отдал карточку (антибот)");
