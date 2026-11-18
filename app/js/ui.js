@@ -115,9 +115,24 @@ const UI = (() => {
   // ---------- поиск ----------
   function renderSeed(seed) {
     $("search-empty").style.display = "none";
+    const mp = seed.marketplaceLabel ? " · " + esc(seed.marketplaceLabel) : "";
     $("seed-card").innerHTML =
-      `<div class="section-title">Ваш товар</div>` + card(seed, { best: false });
+      `<div class="section-title">Ваш товар${mp}</div>` + card(seed, { best: false });
     bindCardActions($("seed-card"));
+  }
+
+  function renderPlatformStatus(statuses) {
+    const el = $("platform-status");
+    if (!el) return;
+    const items = Object.values(statuses || {}).filter((s) => s.state === "error" || s.state === "empty");
+    if (!items.length) { el.innerHTML = ""; return; }
+    el.innerHTML = items.map((s) => {
+      const text = s.state === "error"
+        ? "не ответил — попробуйте ещё раз через минуту"
+        : "ничего не нашлось";
+      const icon = s.state === "error" ? "⚠️" : "🔍";
+      return `<div class="pstatus ${s.state}">${icon} <span><b>${esc(s.label)}</b> — ${esc(text)}</span></div>`;
+    }).join("");
   }
 
   function renderResults(seed, res) {
@@ -141,14 +156,8 @@ const UI = (() => {
     } else {
       $("similar").innerHTML = "";
     }
-    const errs = Object.keys(res.errors || {});
-    if (errs.length) {
-      const names = errs.map(label).join(", ");
-      status(`Не ответили: ${names}. Попробуйте ещё раз через минуту.`, "progress");
-      setTimeout(() => { if (!state.busy) status(""); }, 6000);
-    } else {
-      status("");
-    }
+    renderPlatformStatus(res.statuses);
+    status("");
   }
 
   function renderHistory() {
@@ -194,17 +203,24 @@ const UI = (() => {
   }
 
   async function doSearch(qArg) {
-    const q = String(qArg || $("q").value).trim();
+    let q = String(qArg || $("q").value).trim();
     if (q.length < 3 || state.busy) return;
+    const direct = Scrape.extractUrl(q);
+    if (direct) { q = direct; $("q").value = direct; }
     Store.addHistory(q);
     renderHistory();
     state.busy = true;
     $("seed-card").innerHTML = "";
     $("results").innerHTML = "";
     $("similar").innerHTML = "";
+    $("platform-status").innerHTML = "";
     status("Ищу товар…", "progress");
     try {
       let seed = Store.cacheGet("seed:" + q.toLowerCase());
+      if (seed && direct) {
+        const expected = Scrape.marketplaceOf(direct);
+        if (expected && seed.marketplace !== expected) seed = null;
+      }
       if (!seed) {
         seed = await Scrape.findSeed(q, (s) => status(s, "progress"));
         Store.cacheSet("seed:" + q.toLowerCase(), seed);

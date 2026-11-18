@@ -423,8 +423,12 @@ const Scrape = (() => {
   }
 
   async function byUrl(url) {
+    const expected = marketplaceOf(url);
     const off = await call(url, productExtractor, {});
-    if (!off.marketplace) off.marketplace = marketplaceOf(url) || "ozon";
+    if (expected && off.marketplace && off.marketplace !== expected) {
+      throw new Error("Открылась не та площадка");
+    }
+    if (!off.marketplace) off.marketplace = expected || "ozon";
     return off;
   }
 
@@ -439,11 +443,16 @@ const Scrape = (() => {
     const same = [];
     const similar = [];
     const errors = {};
+    const statuses = {};
     for (const p of PLATFORMS) {
-      if (p.when && !p.when(seed)) continue;
+      if (p.when && !p.when(seed)) {
+        statuses[p.key] = { label: p.label, state: "skipped" };
+        continue;
+      }
       if (onProgress) onProgress(p.label);
       try {
         const offers = await search(p.key, seed.title);
+        statuses[p.key] = { label: p.label, state: offers.length ? "ok" : "empty" };
         for (const o of offers) {
           o.marketplaceLabel = p.label;
           if (o.url === seed.url) continue;
@@ -454,6 +463,7 @@ const Scrape = (() => {
           else if (m.isSimilar) similar.push(o);
         }
       } catch (e) {
+        statuses[p.key] = { label: p.label, state: "error", error: e.message || String(e) };
         if (!p.beta) errors[p.key] = e.message || String(e);
       }
     }
@@ -467,13 +477,25 @@ const Scrape = (() => {
     const sameList = Object.values(best).sort((a, b) => a.price - b.price);
     similar.sort((a, b) => Match.valueRank(b.price, b.rating, b.reviews) -
                           Match.valueRank(a.price, a.rating, a.reviews));
-    return { same: sameList, similar: similar.slice(0, 6), errors };
+    return { same: sameList, similar: similar.slice(0, 6), errors, statuses };
+  }
+
+  function extractUrl(text) {
+    const m = String(text || "").match(/https?:\/\/\S+/i);
+    return m ? m[0].replace(/[).,;!]+$/, "") : null;
   }
 
   async function findSeed(query, onStep) {
-    if (/^https?:\/\//i.test(query)) {
+    const direct = extractUrl(query);
+    if (direct) {
       if (onStep) onStep("Открываю ссылку…");
-      return await byUrl(query);
+      const mp = marketplaceOf(direct);
+      if (!mp) throw new Error("Эта площадка пока не поддерживается");
+      try {
+        return await byUrl(direct);
+      } catch (e) {
+        throw new Error("Не удалось открыть карточку: " + (e.message || e));
+      }
     }
     const errors = [];
     for (const p of PLATFORMS) {
@@ -492,5 +514,5 @@ const Scrape = (() => {
     throw new Error("Ничего не нашлось" + detail + ". Уточните название, выключите VPN или вставьте ссылку.");
   }
 
-  return { call, byUrl, search, compare, findSeed, PLATFORMS, marketplaceOf, hasBridge };
+  return { call, byUrl, search, compare, findSeed, extractUrl, PLATFORMS, marketplaceOf, hasBridge };
 })();

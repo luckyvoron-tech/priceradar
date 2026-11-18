@@ -349,3 +349,13 @@ main { padding: 16px 16px 24px; }
 
 .hidden { display: none !important; }
 .link-btn { border: 0; background: none; color: var(--primary); font-size: inherit; text-decoration: underline; padding: 0; }
+
+/* статус площадок */
+#platform-status { margin: 8px 0 4px; }
+.pstatus {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 13px; line-height: 1.35;
+  padding: 8px 12px; border-radius: 12px; margin: 6px 0;
+}
+.pstatus.error { background: #FFF1EE; color: #9B3B2E; }
+.pstatus.empty { background: #F5F2ED; color: #6B6257; }
