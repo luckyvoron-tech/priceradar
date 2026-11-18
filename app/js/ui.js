@@ -270,7 +270,7 @@ const UI = (() => {
     const input = $("q");
     const btn = $("q-clear");
     if (!input || !btn) return;
-    btn.classList.toggle("hidden", !input.value);
+    btn.classList.remove("hidden");
   }
 
   // ---------- треки ----------

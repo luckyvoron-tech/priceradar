@@ -379,3 +379,4 @@ input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; disp
   background: #FFF1EE; color: #9B3B2E; font-size: 13.5px;
 }
 #seed-error button { width: 100%; margin-top: 10px; }
+.q-clear { z-index: 3; }

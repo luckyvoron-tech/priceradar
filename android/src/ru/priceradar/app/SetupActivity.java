@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -13,11 +14,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Видимый WebView для настройки площадки: выбрать город/магазин М.Косметик.
- * Куки и localStorage остаются в приложении и используются скрытым WebView,
- * поэтому поиск начинает считать цены по выбранному магазину.
+ * Видимый WebView для настройки площадки (магазин М.Косметик) и прохождения
+ * проверки Ozon. Куки и localStorage остаются в приложении и используются
+ * скрытым WebView.
  */
 public class SetupActivity extends Activity {
+
+    private static final String MOBILE_UA =
+            "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 
     private WebView webView;
 
@@ -54,6 +59,7 @@ public class SetupActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
+        s.setUserAgentString(MOBILE_UA);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setSupportZoom(true);
@@ -61,7 +67,17 @@ public class SetupActivity extends Activity {
         s.setDisplayZoomControls(false);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                try {
+                    view.evaluateJavascript(
+                        "(function(){try{if(!window.chrome)window.chrome={};}catch(e){}})()",
+                        null);
+                } catch (Exception ignored) { }
+            }
+        });
 
         root.addView(bar);
         root.addView(webView, new LinearLayout.LayoutParams(
