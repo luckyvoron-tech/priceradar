@@ -29,7 +29,10 @@
     <!-- ПОИСК -->
     <section id="tab-search" class="pane active">
       <div class="searchbox">
-        <input id="q" type="search" placeholder="Ссылка на товар или название…" autocomplete="off">
+        <div class="q-wrap">
+          <input id="q" type="search" placeholder="Ссылка на товар или название…" autocomplete="off">
+          <button id="q-clear" class="q-clear hidden" aria-label="Очистить">×</button>
+        </div>
         <button id="go" class="primary-btn">Найти</button>
       </div>
       <div class="chips" id="chips">

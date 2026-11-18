@@ -19,8 +19,11 @@ import android.os.Looper;
 import android.util.Base64;
 import android.view.View;
 import android.view.WindowInsets;
+import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.JsPromptResult;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -205,9 +208,48 @@ public class MainActivity extends Activity {
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
         CookieManager.getInstance().setAcceptThirdPartyCookies(w, true);
-        w.addJavascriptInterface(new ScrapeBridge(id), "PR");
+
+        // Никаких JS-интерфейсов в странице маркетплейса: результат возвращаем
+        // через prompt(), который перехватывает нативная оболочка. Это важно:
+        // window.PR/window.AndroidBridge — явный признак WebView для антибота.
+        w.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsPrompt(WebView view, String promptUrl, String message,
+                                      String defaultValue, JsPromptResult result) {
+                if (message != null && message.startsWith("PRRESULT:")) {
+                    final String payload = message.substring("PRRESULT:".length());
+                    result.confirm("");
+                    handler.post(new Runnable() {
+                        @Override public void run() { deliver(id, payload); }
+                    });
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage cm) {
+                String m = cm.message();
+                if (m != null && m.startsWith("PRRESULT:")) {
+                    final String payload = m.substring("PRRESULT:".length());
+                    handler.post(new Runnable() {
+                        @Override public void run() { deliver(id, payload); }
+                    });
+                    return true;
+                }
+                return true;
+            }
+        });
 
         w.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String pageUrl, android.graphics.Bitmap favicon) {
+                try {
+                    view.evaluateJavascript(
+                        "(function(){try{if(!window.chrome)window.chrome={};" +
+                        "if(!window.chrome.runtime)window.chrome.runtime={};}catch(e){}})()", null);
+                } catch (Exception ignored) { }
+            }
             private Runnable pendingRun;
 
             @Override

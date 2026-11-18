@@ -241,7 +241,16 @@ const UI = (() => {
       $("search-empty").style.display = "block";
     } finally {
       state.busy = false;
+      $("q").value = "";
+      updateClear();
     }
+  }
+
+  function updateClear() {
+    const input = $("q");
+    const btn = $("q-clear");
+    if (!input || !btn) return;
+    btn.classList.toggle("hidden", !input.value);
   }
 
   // ---------- треки ----------
@@ -419,6 +428,8 @@ const UI = (() => {
     document.querySelectorAll("#tabs .tab").forEach((b) =>
       b.addEventListener("click", () => tab(b.dataset.tab)));
     $("go").addEventListener("click", () => doSearch());
+    $("q").addEventListener("input", updateClear);
+    $("q-clear").addEventListener("click", () => { $("q").value = ""; updateClear(); $("q").focus(); });
     $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
     document.querySelectorAll("#chips .chip").forEach((b) =>
       b.addEventListener("click", () => { $("q").value = b.dataset.q; doSearch(); }));

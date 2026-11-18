@@ -37,9 +37,11 @@ const Scrape = (() => {
     }
     const id = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const code =
-      "(async()=>{try{const d=await (" + fn.toString() + ")(" + JSON.stringify(args || {}) + ");" +
-      "PR.send(JSON.stringify({ok:true,data:d}));}catch(e){" +
-      "PR.send(JSON.stringify({ok:false,error:String((e&&e.message)||e)}));}})()";
+      "(async()=>{let o;try{const d=await (" + fn.toString() + ")(" + JSON.stringify(args || {}) + ");" +
+      "o={ok:true,data:d};}catch(e){o={ok:false,error:String((e&&e.message)||e)};}" +
+      "const s='PRRESULT:'+JSON.stringify(o);" +
+      "try{window.prompt(s);}catch(e){}" +
+      "try{console.log(s);}catch(e){}})()";
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         delete pending[id];
