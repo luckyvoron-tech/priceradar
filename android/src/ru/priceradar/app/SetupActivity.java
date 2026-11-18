@@ -36,7 +36,8 @@ public class SetupActivity extends Activity {
         bar.setBackgroundColor(0xFFFFF8F3);
 
         TextView title = new TextView(this);
-        title.setText("Выберите магазин");
+        String titleText = getIntent().getStringExtra("title");
+        title.setText(titleText != null && !titleText.isEmpty() ? titleText : "Выберите магазин");
         title.setTextSize(18);
         title.setTextColor(0xFF2B2440);
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(

@@ -6,7 +6,7 @@ const UI = (() => {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 
-  const state = { last: null, busy: false };
+  const state = { last: null, busy: false, lastQuery: "", lastUrl: "" };
 
   function toast(text) {
     const el = $("toast");
@@ -210,6 +210,8 @@ const UI = (() => {
     if (q.length < 3 || state.busy) return;
     const direct = Scrape.extractUrl(q);
     if (direct) { q = direct; $("q").value = direct; }
+    state.lastQuery = q;
+    state.lastUrl = direct || "";
     Store.addHistory(q);
     renderHistory();
     state.busy = true;
@@ -217,6 +219,8 @@ const UI = (() => {
     $("results").innerHTML = "";
     $("similar").innerHTML = "";
     $("platform-status").innerHTML = "";
+    $("seed-error").classList.add("hidden");
+    $("seed-error").innerHTML = "";
     status("Ищу товар…", "progress");
     try {
       let seed = Store.cacheGet("seed:" + q.toLowerCase());
@@ -237,13 +241,29 @@ const UI = (() => {
       const hint = $("magnit-hint");
       if (hint) hint.classList.toggle("hidden", !(isCosmetic(seed.title) && !Store.magnitStore()));
     } catch (e) {
-      status(e.message || "Не получилось. Проверьте интернет и выключите VPN.", "");
+      if (direct) {
+        showSeedError(e.message || "Не удалось открыть ссылку", direct);
+      } else {
+        status(e.message || "Не получилось. Проверьте интернет и выключите VPN.", "");
+      }
       $("search-empty").style.display = "block";
     } finally {
       state.busy = false;
       $("q").value = "";
       updateClear();
     }
+  }
+
+  function showSeedError(msg, url) {
+    const el = $("seed-error");
+    if (!el) return;
+    el.classList.remove("hidden");
+    el.innerHTML = `<div>⚠️ ${esc(msg)}</div>` +
+      `<button id="check-btn" class="secondary-btn">Открыть площадку и пройти проверку</button>`;
+    $("check-btn").addEventListener("click", () => {
+      if (window.AndroidBridge && window.AndroidBridge.openCheck) window.AndroidBridge.openCheck(url);
+      else openUrl(url);
+    });
   }
 
   function updateClear() {
@@ -461,6 +481,11 @@ const UI = (() => {
       status("Это приложение работает только на телефоне: в браузере площадки блокируют запросы.", "");
     }
   }
+
+  window.__prCheckDone = function () {
+    const q = state.lastUrl || state.lastQuery;
+    if (q) doSearch(q);
+  };
 
   window.__prSetupDone = function () {
     Store.setMagnitStore();

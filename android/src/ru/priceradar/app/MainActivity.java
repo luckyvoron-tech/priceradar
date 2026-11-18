@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
             + "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
     private static final int NOTIFY_PERMISSION = 2001;
     private static final int SETUP_REQUEST = 2002;
+    private static final int CHECK_REQUEST = 2003;
     private static final String CHANNEL_ID = "priceradar";
 
     private WebView webView;
@@ -414,6 +415,20 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void openCheck(final String url) {
+            handler.post(new Runnable() {
+                @Override public void run() {
+                    try {
+                        Intent i = new Intent(MainActivity.this, SetupActivity.class);
+                        i.putExtra("url", url);
+                        i.putExtra("title", "Проверка площадки");
+                        startActivityForResult(i, CHECK_REQUEST);
+                    } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        @JavascriptInterface
         public String version() {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -551,6 +566,11 @@ public class MainActivity extends Activity {
         if (requestCode == SETUP_REQUEST && resultCode == RESULT_OK && webView != null) {
             try {
                 webView.evaluateJavascript("window.__prSetupDone&&window.__prSetupDone()", null);
+            } catch (Exception ignored) { }
+        }
+        if (requestCode == CHECK_REQUEST && resultCode == RESULT_OK && webView != null) {
+            try {
+                webView.evaluateJavascript("window.__prCheckDone&&window.__prCheckDone()", null);
             } catch (Exception ignored) { }
         }
     }

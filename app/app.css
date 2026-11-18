@@ -373,3 +373,9 @@ main { padding: 16px 16px 24px; }
 .q-clear.hidden { display: none; }
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+
+#seed-error {
+  margin: 12px 0; padding: 12px 14px; border-radius: 14px;
+  background: #FFF1EE; color: #9B3B2E; font-size: 13.5px;
+}
+#seed-error button { width: 100%; margin-top: 10px; }
