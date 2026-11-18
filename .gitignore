@@ -8,3 +8,4 @@ runtime.json
 dist/
 _audit/
 tools/kimi_*.py
+_agent/
