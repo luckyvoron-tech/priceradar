@@ -1,0 +1,10 @@
+logs/
+build/
+.venv/
+__pycache__/
+*.pyc
+*.log
+runtime.json
+dist/
+_audit/
+tools/kimi_audit*.py
