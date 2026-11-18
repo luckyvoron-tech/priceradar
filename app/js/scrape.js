@@ -23,7 +23,7 @@ const Scrape = (() => {
     return callOnce(pageUrl, fn, args).catch((e) => {
       const msg = String((e && e.message) || e);
       // страница могла перезагрузиться после антибот-челленджа — один повтор
-      if (!/Antibot|navigat|net::|ERR_/i.test(msg)) throw e;
+      if (!/Antibot|navigat|net::|ERR_|403|498|429/i.test(msg)) throw e;
       return new Promise((r) => setTimeout(r, 2000)).then(() => callOnce(pageUrl, fn, args));
     });
   }
