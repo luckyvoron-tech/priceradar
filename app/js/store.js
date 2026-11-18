@@ -9,6 +9,7 @@ const Store = (() => {
     cache: {},
     history: [],
     dismissedUpdate: "",
+    magnitStore: false,
   });
 
   let data = defaultData();
@@ -144,6 +145,9 @@ const Store = (() => {
   function dismissUpdate(tag) { data.dismissedUpdate = tag || ""; save(); }
   function dismissedUpdate() { return data.dismissedUpdate || ""; }
 
+  function magnitStore() { return !!data.magnitStore; }
+  function setMagnitStore() { data.magnitStore = true; save(); }
+
   // --- кэш поиска ---
   function cacheGet(key, ttlMs = 20 * 60 * 1000) {
     const hit = data.cache[key];
@@ -172,6 +176,6 @@ const Store = (() => {
     wish, addWish, wishDone, wishKeep, wishDue, wishMarkReminded,
     setCashback, getCashback, cashbackFor,
     cacheGet, cacheSet, seenOnboarding, markOnboarding, loadError: () => loadError,
-    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate,
+    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate, magnitStore, setMagnitStore,
   };
 })();

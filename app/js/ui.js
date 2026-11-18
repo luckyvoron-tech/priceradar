@@ -65,6 +65,17 @@ const UI = (() => {
   }
 
   const LABELS = { wildberries: "Wildberries", ozon: "Ozon", ymarket: "Яндекс Маркет", magnit: "М.Косметик" };
+  const COSMETIC_RE = /крем|космет|маск|шампун|помад|туш|парфюм|духи|сыворот|гель|лак|пудр|тональн|уход|бальзам|скраб|дезодор|зубн|мыло|кондиционер|макияж|блеск|карандаш|тени|румяна|хайлайтер|мицелляр|патч|маникюр|педикюр|парфюмер/i;
+
+  function isCosmetic(title) { return COSMETIC_RE.test(String(title || "")); }
+
+  function openMagnitSetup() {
+    if (window.AndroidBridge && window.AndroidBridge.openSetup) {
+      window.AndroidBridge.openSetup("https://cosmetic.magnit.ru/");
+    } else {
+      openUrl("https://cosmetic.magnit.ru/");
+    }
+  }
   function label(mp) { return LABELS[mp] || mp; }
 
   function offerById(url) {
@@ -204,6 +215,8 @@ const UI = (() => {
       const res = await Scrape.compare(seed, (lab) => status("Сравниваю: " + lab + "…", "progress"));
       state.last = { seed, res };
       renderResults(seed, res);
+      const hint = $("magnit-hint");
+      if (hint) hint.classList.toggle("hidden", !(isCosmetic(seed.title) && !Store.magnitStore()));
     } catch (e) {
       status(e.message || "Не получилось. Проверьте интернет и выключите VPN.", "");
       $("search-empty").style.display = "block";
@@ -401,6 +414,8 @@ const UI = (() => {
       toast("Добавлено в список 💜");
     });
     $("cb-save").addEventListener("click", saveCashback);
+    $("magnit-setup").addEventListener("click", openMagnitSetup);
+    $("magnit-hint-btn").addEventListener("click", openMagnitSetup);
     $("onb-start").addEventListener("click", () => {
       Store.markOnboarding();
       $("onboarding").classList.add("hidden");
@@ -416,6 +431,15 @@ const UI = (() => {
       status("Это приложение работает только на телефоне: в браузере площадки блокируют запросы.", "");
     }
   }
+
+  window.__prSetupDone = function () {
+    Store.setMagnitStore();
+    const hint = $("magnit-hint");
+    if (hint) hint.classList.add("hidden");
+    toast("Магазин М.Косметик выбран");
+    const q = $("q").value.trim();
+    if (q.length >= 3) doSearch(q);
+  };
 
   window.__prShared = function (text) {
     const raw = String(text || "");

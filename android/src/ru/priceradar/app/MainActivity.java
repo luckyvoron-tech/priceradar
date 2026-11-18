@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
     private static final int NOTIFY_PERMISSION = 2001;
+    private static final int SETUP_REQUEST = 2002;
     private static final String CHANNEL_ID = "priceradar";
 
     private WebView webView;
@@ -328,6 +329,19 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void openSetup(final String url) {
+            handler.post(new Runnable() {
+                @Override public void run() {
+                    try {
+                        Intent i = new Intent(MainActivity.this, SetupActivity.class);
+                        i.putExtra("url", url);
+                        startActivityForResult(i, SETUP_REQUEST);
+                    } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        @JavascriptInterface
         public String version() {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -456,6 +470,16 @@ public class MainActivity extends Activity {
             webView.goBack();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SETUP_REQUEST && resultCode == RESULT_OK && webView != null) {
+            try {
+                webView.evaluateJavascript("window.__prSetupDone&&window.__prSetupDone()", null);
+            } catch (Exception ignored) { }
         }
     }
 
