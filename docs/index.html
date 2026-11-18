@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PriceRadar — где дешевле, без лишних покупок</title>
-  <meta name="description" content="Сравнение цен на Wildberries, Ozon и Яндекс Маркете с телефона. Без сервера, без VPN, с правилом 24 часов.">
+  <meta name="description" content="Сравнение цен на Wildberries, Яндекс Маркете и М.Косметик с телефона. Без регистрации, сервера и VPN.">
   <meta property="og:title" content="PriceRadar — где дешевле">
-  <meta property="og:description" content="Сравнение цен на Wildberries, Ozon и Яндекс Маркете с телефона. Без сервера и VPN.">
+  <meta property="og:description" content="Один товар — сразу на трёх площадках. Сравнение цен, слежение и список желаний.">
   <meta property="og:image" content="icon.png">
   <link rel="icon" href="icon.png">
   <link rel="stylesheet" href="style.css">
@@ -15,7 +15,7 @@
   <header class="hero">
     <img src="icon.png" alt="" class="icon">
     <h1>PriceRadar</h1>
-    <p class="tagline">Один товар — сразу на трёх маркетплейсах.<br>Покажу, где дешевле, и помогу не купить лишнего.</p>
+    <p class="tagline">Один товар — сразу на трёх площадках.<br>Покажу, где дешевле, и помогу не купить лишнего.</p>
     <a class="download" href="https://github.com/luckyvoron-tech/priceradar/releases/latest/download/PriceRadar.apk">
       ⬇ Скачать APK для Android
     </a>
@@ -24,17 +24,18 @@
 
   <main>
     <section class="features">
-      <div class="feature"><span>🔎</span><h3>Три площадки сразу</h3><p>Wildberries, Ozon и Яндекс Маркет — по ссылке или названию.</p></div>
+      <div class="feature"><span>🔎</span><h3>Три площадки сразу</h3><p>Wildberries, Яндекс Маркет и М.Косметик — по ссылке или названию.</p></div>
       <div class="feature"><span>💰</span><h3>Выгода в рублях</h3><p>Показываю не только «где дешевле», но и сколько можно сэкономить.</p></div>
       <div class="feature"><span>🔔</span><h3>Слежу за ценой</h3><p>Уведомление, когда цена снизилась.</p></div>
       <div class="feature"><span>🕘</span><h3>История поиска</h3><p>Последние запросы — в один тап.</p></div>
-      <div class="feature"><span>📤</span><h3>Поделиться ссылкой</h3><p>Из Wildberries или Ozon — сразу в сравнение.</p></div>
+      <div class="feature"><span>📤</span><h3>Поделиться ссылкой</h3><p>Из Wildberries или Яндекс Маркета — сразу в сравнение.</p></div>
       <div class="feature"><span>💜</span><h3>Правило 24 часов</h3><p>Через сутки спрошу: «всё ещё нужно?» — против импульсивных покупок.</p></div>
     </section>
 
     <section class="shots">
-      <img src="screen-search.png" alt="Поиск и сравнение цен">
-      <img src="screen-help.png" alt="Инструкция и FAQ">
+      <img src="screen-home.png" alt="Главный экран PriceRadar">
+      <img src="screen-results.png" alt="Сравнение цен">
+      <img src="screen-help.png" alt="Помощь и настройки">
     </section>
 
     <section class="how">
@@ -45,21 +46,22 @@
         <li>Разрешите установку из неизвестных источников.</li>
         <li>Выключите VPN и запустите приложение.</li>
       </ol>
-      <p class="note">Почему без VPN: в России Telegram работает только через VPN, а маркетплейсы VPN блокируют. PriceRadar — отдельное приложение, ему VPN не нужен и мешает.</p>
+      <p class="note">Почему без VPN: маркетплейсы блокируют VPN-запросы. PriceRadar — отдельное приложение, ему VPN не нужен и мешает.</p>
     </section>
 
     <section class="faq">
       <h2>Частые вопросы</h2>
+      <details><summary>Почему в сравнении нет Ozon?</summary><p>Ozon блокирует автоматические запросы из приложения. Ссылку на Ozon можно открыть, но сравнение временно недоступно — работаем над партнёрским источником цен.</p></details>
       <details><summary>Почему нет Мегамаркета?</summary><p>Он почти всегда отдаёт капчу. Показываю только площадки, которые ответили.</p></details>
-      <details><summary>Ozon не отвечает — что делать?</summary><p>У Ozon бывает антибот. Подождите минуту или вставьте прямую ссылку на товар.</p></details>
       <details><summary>М.Косметик просит выбрать магазин</summary><p>Цены и наличие зависят от магазина. В приложении: «Помощь» → «Выбрать магазин», укажите ближайший — приложение запомнит.</p></details>
       <details><summary>Где хранятся данные?</summary><p>Только на телефоне. Нет аккаунта, сервера и аналитики.</p></details>
+      <details><summary>Вы зарабатываете на ссылках?</summary><p>Если в приложении появятся партнёрские ссылки, цена для вас не изменится, а ссылки будут помечены. Сейчас сравнение и переходы идут напрямую на площадки.</p></details>
       <details><summary>Как обновляться?</summary><p>Скачайте новый APK с этой страницы — данные сохранятся, ключ подписи тот же.</p></details>
     </section>
 
     <footer>
-      <p>PriceRadar 1.8 · сделано для бережного отношения к бюджету 💜</p>
-      <p><a href="https://github.com/luckyvoron-tech/priceradar">Исходный код на GitHub</a></p>
+      <p>PriceRadar 2.0 · сделано для бережного отношения к бюджету 💜</p>
+      <p><a href="privacy.html">Политика конфиденциальности</a> · <a href="https://github.com/luckyvoron-tech/priceradar">Исходный код на GitHub</a></p>
     </footer>
   </main>
 </body>

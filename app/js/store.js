@@ -82,10 +82,10 @@ const Store = (() => {
     return data.wish.filter((w) => !w.done);
   }
 
-  function addWish(title, price = 0, url = "") {
+  function addWish(title, price = 0, url = "", marketplace = "") {
     const now = Date.now();
     data.wish.unshift({
-      id: uid(), title, price, url,
+      id: uid(), title, price, url, marketplace,
       done: false, reminded: false,
       createdAt: now,
       remindAt: now + 24 * 3600 * 1000,

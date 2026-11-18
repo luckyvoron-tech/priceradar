@@ -3,21 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#FFF8F3">
-  <title>PriceRadar — покупки с умом</title>
+  <meta name="theme-color" content="#FFF9F4">
+  <meta name="description" content="PriceRadar — сравнение цен на Wildberries, Яндекс Маркете и М.Косметик. Без регистрации, данные на телефоне.">
+  <title>PriceRadar — цены без лишнего</title>
   <link rel="stylesheet" href="app.css">
 </head>
-<body>
+<body class="tab-search">
 <div id="app">
 
-  <header class="hero">
-    <div class="hero-top">
-      <div class="logo">🛍 <b>PriceRadar</b></div>
-      <button id="help-btn" class="ghost-btn" aria-label="Помощь">?</button>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i></span>
+      <span class="brand-name">PriceRadar</span>
     </div>
-    <h1>Найдём, где дешевле</h1>
-    <p class="hero-sub">Один товар — сразу на Wildberries, Ozon и Яндекс Маркете</p>
+    <button id="help-btn" class="round-btn" aria-label="Помощь и настройки">?</button>
   </header>
+
+  <section class="hero">
+    <p class="eyebrow">Сравнение цен</p>
+    <h1>Один товар.<br><span>Все цены.</span></h1>
+    <p class="hero-sub">Wildberries, Яндекс Маркет и М.Косметик — в одном поиске. Без регистрации и лишних покупок.</p>
+  </section>
 
   <div id="update" class="update hidden">
     <div class="update-text">Вышла новая версия <b id="update-ver"></b></div>
@@ -28,48 +34,68 @@
   <main>
     <!-- ПОИСК -->
     <section id="tab-search" class="pane active">
-      <div class="searchbox">
-        <div class="q-wrap">
-          <input id="q" type="search" placeholder="Ссылка на товар или название…" autocomplete="off">
-          <button id="q-clear" class="q-clear" aria-label="Очистить">×</button>
+      <div class="search-card">
+        <label class="search-label" for="q">Ссылка на товар или название</label>
+        <div class="searchbox">
+          <div class="q-wrap">
+            <input id="q" type="search" placeholder="Ссылка или название…" autocomplete="off">
+            <button id="q-clear" class="q-clear hidden" aria-label="Очистить">×</button>
+          </div>
+          <button id="go" class="primary-btn">Найти</button>
         </div>
-        <button id="go" class="primary-btn">Найти</button>
+        <div id="chips" class="chips">
+          <button class="chip" data-q="iPhone 15 128 ГБ">iPhone 15</button>
+          <button class="chip" data-q="пылесос Dyson">Dyson</button>
+          <button class="chip" data-q="кроссовки Nike">Nike</button>
+          <button class="chip" data-q="крем для лица">Крем</button>
+        </div>
+        <p class="search-hint">Можно вставить ссылку из приложения площадки или из буфера.</p>
       </div>
-      <div class="chips" id="chips">
-        <button class="chip" data-q="iPhone 15 128 ГБ">iPhone 15</button>
-        <button class="chip" data-q="пылесос Dyson">Dyson</button>
-        <button class="chip" data-q="кроссовки Nike">Nike</button>
-        <button class="chip" data-q="крем для лица">Крем</button>
-      </div>
+
       <div id="history"></div>
       <div id="magnit-hint" class="hint hidden">Для М.Косметик выберите ближайший магазин —
         <button id="magnit-hint-btn" class="link-btn">выбрать</button></div>
+
       <div id="status" class="status"></div>
       <div id="seed-error" class="hidden"></div>
       <div id="seed-card"></div>
       <div id="results"></div>
       <div id="platform-status"></div>
       <div id="similar"></div>
-      <div id="search-empty" class="empty">
-        <div class="empty-emoji">🔎</div>
-        <div>Вставьте ссылку или напишите название —<br>сравню цены и покажу выгоду.</div>
+
+      <div id="search-empty" class="empty-state">
+        <div class="empty-orbit" aria-hidden="true"><span>₽</span></div>
+        <h2>Начните с одного товара</h2>
+        <p>Покажу цены на трёх площадках, выгоду и где выгоднее купить сейчас.</p>
+        <div class="trust-grid">
+          <div class="trust-item"><b>0 ₽</b><span>без подписки</span></div>
+          <div class="trust-item"><b>Локально</b><span>данные на телефоне</span></div>
+          <div class="trust-item"><b>3</b><span>площадки</span></div>
+        </div>
+        <div class="benefits">
+          <div><span>🔎</span><p><b>Сравнение</b>WB, Яндекс и М.Косметик</p></div>
+          <div><span>🔔</span><p><b>Слежение</b>сообщу о снижении</p></div>
+          <div><span>💜</span><p><b>Список</b>правило 24 часов</p></div>
+        </div>
       </div>
     </section>
 
     <!-- ОТСЛЕЖИВАНИЕ -->
     <section id="tab-tracks" class="pane">
-      <div class="section-head">
-        <h2>Отслеживание</h2>
-        <button id="refresh-tracks" class="ghost-btn">Обновить</button>
+      <div class="page-head">
+        <div><p class="eyebrow">Ваши цены</p><h2>Отслеживание</h2></div>
+        <button id="refresh-tracks" class="soft-btn">Обновить</button>
       </div>
-      <p class="hint">Цены проверяются при открытии приложения и по кнопке «Обновить».</p>
+      <p class="hint">Проверяю при открытии приложения и по кнопке. Уведомление придёт, если цена снизится.</p>
       <div id="tracks-status" class="status"></div>
       <div id="tracks"></div>
     </section>
 
     <!-- СПИСОК -->
     <section id="tab-wish" class="pane">
-      <div class="section-head"><h2>Список покупок</h2></div>
+      <div class="page-head">
+        <div><p class="eyebrow">Перед покупкой</p><h2>Список желаний</h2></div>
+      </div>
       <div class="searchbox small">
         <input id="wish-input" type="text" placeholder="Что хочется купить?">
         <button id="wish-add" class="primary-btn">＋</button>
@@ -80,74 +106,90 @@
 
     <!-- ПОМОЩЬ -->
     <section id="tab-help" class="pane">
-      <div class="section-head"><h2>Как это работает</h2></div>
-      <div class="steps">
-        <div class="step"><span>1</span><div><b>Найдите товар</b><p>Вставьте ссылку с маркетплейса или напишите название.</p></div></div>
-        <div class="step"><span>2</span><div><b>Сравните цены</b><p>Приложение откроет Wildberries, Ozon и Яндекс Маркет и соберёт цены.</p></div></div>
-        <div class="step"><span>3</span><div><b>Следите за ценой</b><p>Нажмите 🔔 — при снижении покажу уведомление.</p></div></div>
-        <div class="step"><span>4</span><div><b>Покупайте спокойно</b><p>Список покупок и правило 24 часов помогут не тратить лишнего.</p></div></div>
+      <div class="page-head">
+        <div><p class="eyebrow">Настройки</p><h2>Помощь</h2></div>
       </div>
 
-      <div class="section-head"><h2>Частые вопросы</h2></div>
-      <div class="faq">
-        <details><summary>Почему не показывается Мегамаркет?</summary>
-          <p>Мегамаркет почти всегда отдаёт капчу. Приложение честно показывает только те площадки, которые ответили.</p></details>
-        <details><summary>Ozon иногда пустой — это нормально?</summary>
-          <p>Ozon защищается от автоматических запросов. Попробуйте ещё раз через минуту или вставьте прямую ссылку на товар.</p></details>
+      <div class="info-card">
+        <h3>Как это работает</h3>
+        <div class="steps">
+          <div class="step"><span>1</span><div><b>Найдите товар</b><p>Вставьте ссылку с маркетплейса или напишите название.</p></div></div>
+          <div class="step"><span>2</span><div><b>Сравните цены</b><p>Приложение открывает площадки и собирает актуальные цены.</p></div></div>
+          <div class="step"><span>3</span><div><b>Следите за ценой</b><p>Нажмите 🔔 — сообщу, когда станет дешевле.</p></div></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>Кэшбэк карты</h3>
+        <p class="hint">Укажите процент — покажу цену с учётом кэшбэка.</p>
+        <div class="cashback">
+          <label>Wildberries <input class="cb" data-mp="wildberries" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
+          <label>Яндекс Маркет <input class="cb" data-mp="ymarket" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
+          <label>М.Косметик <input class="cb" data-mp="magnit" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <button id="cb-save" class="secondary-btn wide">Сохранить</button>
+      </div>
+
+      <div class="info-card">
+        <h3>Магазин М.Косметик</h3>
+        <p class="hint">Цены и наличие зависят от магазина. Выберите ближайший один раз.</p>
+        <button id="magnit-setup" class="secondary-btn wide">Выбрать магазин</button>
+      </div>
+
+      <div class="info-card faq">
+        <h3>Частые вопросы</h3>
+        <details><summary>Почему в сравнении нет Ozon?</summary>
+          <p>Ozon блокирует автоматические запросы из приложения, поэтому сравнение временно недоступно. Ссылку на Ozon можно открыть — цена будет на сайте площадки.</p></details>
+        <details><summary>Почему нет Мегамаркета?</summary>
+          <p>Мегамаркет почти всегда отдаёт капчу. Показываю только площадки, которые реально ответили.</p></details>
         <details><summary>Нужен ли VPN?</summary>
           <p>Нет. Наоборот: <b>выключите VPN</b>. С VPN маркетплейсы блокируют запросы, и цены не загрузятся.</p></details>
         <details><summary>Почему цена отличается от сайта?</summary>
-          <p>Цена с картой, кэшбэк и промокоды меняются. Приложение показывает цену на момент запроса; итог с кэшбэком можно настроить в «Профиле».</p></details>
+          <p>Цена с картой, кэшбэк и промокоды меняются. Показываю цену на момент запроса; итог с кэшбэком можно настроить выше.</p></details>
         <details><summary>М.Косметик просит выбрать магазин</summary>
-          <p>Цены и наличие зависят от магазина. Нажмите «Выбрать магазин» (вкладка «Помощь»), укажите ближайший — приложение запомнит выбор и будет считать по нему.</p></details>
+          <p>Нажмите «Выбрать магазин» и укажите ближайший — приложение запомнит выбор.</p></details>
         <details><summary>Где хранятся мои данные?</summary>
-          <p>Только на телефоне. Нет аккаунта, нет сервера, ничего не отправляется наружу, кроме запросов к самим маркетплейсам.</p></details>
-        <details><summary>Как работает правило 24 часов?</summary>
-          <p>Добавьте вещь в список. Через сутки приложение спросит: «всё ещё нужно?». Если да — отложит вопрос на 3 дня, если нет — уберёт из списка.</p></details>
-        <details><summary>Это официальное приложение?</summary>
-          <p>Нет. Это личный помощник: он открывает публичные страницы маркетплейсов и сравнивает цены. Покупка происходит на сайте площадки.</p></details>
+          <p>Только на телефоне. Нет аккаунта и сервера; наружу уходят только запросы к самим площадкам.</p></details>
+        <details><summary>Вы зарабатываете на ссылках?</summary>
+          <p id="affiliate-disclosure">Приложение пока не использует партнёрские ссылки. Цены и переходы — как на самих площадках.</p></details>
       </div>
 
-      <div class="section-head"><h2>Кэшбэк карты</h2></div>
-      <p class="hint">Укажите процент кэшбэка — покажу итоговую цену с его учётом.</p>
-      <div class="cashback">
-        <label>Wildberries <input class="cb" data-mp="wildberries" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
-        <label>Ozon <input class="cb" data-mp="ozon" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
-        <label>Яндекс Маркет <input class="cb" data-mp="ymarket" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
+      <div class="info-card">
+        <h3>Приложение</h3>
+        <p class="hint">Версия <b id="about-version">2.0</b> · без регистрации и сервера</p>
+        <button id="share-app" class="secondary-btn wide">Поделиться приложением</button>
+        <button id="open-issues" class="ghost-wide">Сообщить о проблеме</button>
+        <button id="privacy-btn" class="ghost-wide">Политика конфиденциальности</button>
       </div>
-      <button id="cb-save" class="secondary-btn wide">Сохранить кэшбэк</button>
-
-      <div class="section-head"><h2>Магазин М.Косметик</h2></div>
-      <p class="hint">Цены и наличие в М.Косметик считаются по ближайшему магазину. Выберите его один раз — приложение запомнит.</p>
-      <button id="magnit-setup" class="secondary-btn wide">Выбрать магазин</button>
 
       <div class="about">
-        <p><b>PriceRadar 1.0</b> · работает без регистрации и без сервера</p>
-        <p class="muted">Сделано для бережного отношения к бюджету 💜</p>
+        <p><b>PriceRadar</b> · сделано для бережного отношения к бюджету 💜</p>
+        <p class="muted">Приложение не является официальным сервисом маркетплейсов.</p>
       </div>
     </section>
   </main>
 
   <nav id="tabs">
-    <button class="tab active" data-tab="search"><span>🔎</span>Поиск</button>
-    <button class="tab" data-tab="tracks"><span>🔔</span>Цены</button>
-    <button class="tab" data-tab="wish"><span>💜</span>Список</button>
-    <button class="tab" data-tab="help"><span>📖</span>Помощь</button>
+    <button class="tab active" data-tab="search"><span>⌕</span>Поиск</button>
+    <button class="tab" data-tab="tracks"><span>◔</span>Цены</button>
+    <button class="tab" data-tab="wish"><span>♡</span>Список</button>
+    <button class="tab" data-tab="help"><span>?</span>Помощь</button>
   </nav>
 </div>
 
 <!-- Онбординг -->
 <div id="onboarding" class="modal hidden">
   <div class="modal-card">
-    <div class="onb-emoji">🛍</div>
-    <h2>Добро пожаловать!</h2>
-    <p>PriceRadar сравнивает цены на Wildberries, Ozon и Яндекс Маркете — и помогает не покупать лишнего.</p>
+    <div class="onb-logo"><span class="brand-mark"><i></i></span></div>
+    <p class="eyebrow">Добро пожаловать</p>
+    <h2>Цены без лишнего</h2>
+    <p>Один поиск — и видно, где тот же товар дешевле. Без аккаунта, рекламы и сбора данных.</p>
     <ul class="onb-list">
-      <li>🔎 Ссылка или название — покажу, где дешевле</li>
-      <li>🔔 Отслеживание цены</li>
-      <li>💜 Список покупок с правилом 24 часов</li>
+      <li><b>Сравнение</b> Wildberries, Яндекс Маркет, М.Косметик</li>
+      <li><b>Слежение</b> за ценой и уведомления</li>
+      <li><b>Список желаний</b> с правилом 24 часов</li>
     </ul>
-    <p class="warn">Важно: выключите VPN — иначе маркетплейсы заблокируют запросы.</p>
+    <p class="warn">Выключите VPN — иначе площадки заблокируют запросы.</p>
     <button id="onb-start" class="primary-btn wide">Начать</button>
   </div>
 </div>
@@ -160,13 +202,15 @@
     <p id="wish-modal-text"></p>
     <div class="row">
       <button id="wish-yes" class="secondary-btn">💜 Ещё нужно</button>
-      <button id="wish-no" class="ghost-btn">🙅 Уже нет</button>
+      <button id="wish-no" class="ghost-btn wide-ghost">🙅 Уже нет</button>
     </div>
   </div>
 </div>
 
 <div id="toast" class="toast hidden"></div>
 
+<script src="js/config.js"></script>
+<script src="js/affiliate.js"></script>
 <script src="js/store.js"></script>
 <script src="js/match.js"></script>
 <script src="js/scrape.js"></script>

@@ -391,17 +391,18 @@ const Scrape = (() => {
   // ---------- площадки ----------
   const COSMETIC_RE = /крем|космет|маск|шампун|помад|туш|парфюм|духи|сыворот|гель|лак|пудр|тональн|уход|бальзам|скраб|дезодор|зубн|мыло|кондиционер|макияж|блеск|карандаш|тени|румяна|хайлайтер|мицелляр|патч|маникюр|педикюр|парфюмер/i;
 
+  const OZON_COMPARE = !(window.APP_CONFIG && window.APP_CONFIG.ozonCompare === false);
   const PLATFORMS = [
     {
       key: "wildberries", label: "Wildberries",
       page: (q) => "https://www.wildberries.ru/catalog/0/search.aspx?search=" + encodeURIComponent(q),
       search: wbSearchExtractor,
     },
-    {
+    ...(OZON_COMPARE ? [{
       key: "ozon", label: "Ozon",
       page: (q) => "https://www.ozon.ru/search/?text=" + encodeURIComponent(q),
       search: ozonSearchExtractor,
-    },
+    }] : []),
     {
       key: "ymarket", label: "Яндекс Маркет",
       page: (q) => "https://market.yandex.ru/search?text=" + encodeURIComponent(q),
@@ -495,6 +496,9 @@ const Scrape = (() => {
       if (onStep) onStep("Открываю ссылку…");
       const mp = marketplaceOf(direct);
       if (!mp) throw new Error("Эта площадка пока не поддерживается");
+      if (mp === "ozon" && !OZON_COMPARE) {
+        throw new Error("Ozon пока не сравнивается — откройте карточку на Ozon");
+      }
       try {
         return await byUrl(direct);
       } catch (e) {
@@ -518,5 +522,5 @@ const Scrape = (() => {
     throw new Error("Ничего не нашлось" + detail + ". Уточните название, выключите VPN или вставьте ссылку.");
   }
 
-  return { call, byUrl, search, compare, findSeed, extractUrl, PLATFORMS, marketplaceOf, hasBridge };
+  return { call, byUrl, search, compare, findSeed, extractUrl, PLATFORMS, marketplaceOf, hasBridge, ozonCompare: () => OZON_COMPARE };
 })();
