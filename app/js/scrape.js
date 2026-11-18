@@ -19,12 +19,15 @@ const Scrape = (() => {
     return typeof window.AndroidBridge !== "undefined" && window.AndroidBridge.scrape;
   }
 
-  function call(pageUrl, fn, args) {
+  function call(pageUrl, fn, args, retries = 1) {
     return callOnce(pageUrl, fn, args).catch((e) => {
       const msg = String((e && e.message) || e);
-      // страница могла перезагрузиться после антибот-челленджа — один повтор
-      if (!/Antibot|navigat|net::|ERR_|403|498|429/i.test(msg)) throw e;
-      return new Promise((r) => setTimeout(r, 2000)).then(() => callOnce(pageUrl, fn, args));
+      // антибот/челлендж/пустая выдача: пробуем ещё раз на свежей странице
+      if (retries <= 0 || !/антибот|капч|робот|карточку|нет данных|Antibot|navigat|net::|ERR_|403|498|429/i.test(msg)) {
+        throw e;
+      }
+      return new Promise((r) => setTimeout(r, 2500))
+        .then(() => call(pageUrl, fn, args, retries - 1));
     });
   }
 
@@ -275,7 +278,7 @@ const Scrape = (() => {
   async function productExtractor() {
     const host = location.hostname;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    if (/Antibot|Подтвердите|нет соединения/i.test(document.title)) await sleep(2500);
+    for (let i = 0; i < 7 && /Antibot|Подтвердите|нет соединения/i.test(document.title); i++) await sleep(1500);
     function ldProduct() {
       for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
         let data;
@@ -423,7 +426,7 @@ const Scrape = (() => {
 
   async function byUrl(url) {
     const expected = marketplaceOf(url);
-    const off = await call(url, productExtractor, {});
+    const off = await call(url, productExtractor, {}, 1);
     if (expected && off.marketplace && off.marketplace !== expected) {
       throw new Error("Открылась не та площадка");
     }

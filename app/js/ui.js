@@ -196,7 +196,10 @@ const UI = (() => {
       if (tag && cmpVer(tag, cur) > 0 && Store.dismissedUpdate() !== tag) {
         $("update-ver").textContent = tag;
         $("update").classList.remove("hidden");
-        $("update-go").onclick = () => openUrl(j.html_url || "https://github.com/luckyvoron-tech/priceradar/releases/latest");
+        const asset = (j.assets || []).find((a) => a.name === "PriceRadar.apk");
+        const dl = asset ? asset.browser_download_url
+          : "https://github.com/luckyvoron-tech/priceradar/releases/latest/download/PriceRadar.apk";
+        $("update-go").onclick = () => openUrl(dl);
         $("update-close").onclick = () => { Store.dismissUpdate(tag); $("update").classList.add("hidden"); };
       }
     } catch (e) {}

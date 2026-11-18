@@ -33,6 +33,8 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -166,6 +168,28 @@ public class MainActivity extends Activity {
         if (webView != null) webView.saveState(outState);
     }
 
+    private String resolveShortLink(String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost();
+            String path = uri.getPath();
+            if (host == null || path == null) return url;
+            if (!host.endsWith("ozon.ru") || !path.startsWith("/t/")) return url;
+            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+            c.setInstanceFollowRedirects(false);
+            c.setConnectTimeout(5000);
+            c.setReadTimeout(5000);
+            c.setRequestProperty("User-Agent", MOBILE_UA);
+            int code = c.getResponseCode();
+            String loc = c.getHeaderField("Location");
+            c.disconnect();
+            if (code >= 300 && code < 400 && loc != null && loc.startsWith("http")) {
+                return loc.split("\\?")[0];
+            }
+        } catch (Exception ignored) { }
+        return url;
+    }
+
     // ---------- скрытый парсинг ----------
 
     private void startScrape(final String id, final String url, final String script) {
@@ -198,7 +222,7 @@ public class MainActivity extends Activity {
                         try { w.evaluateJavascript(script, null); } catch (Exception ignored) { }
                     }
                 };
-                handler.postDelayed(pendingRun, 3500);
+                handler.postDelayed(pendingRun, 4500);
             }
 
             @Override
@@ -266,9 +290,15 @@ public class MainActivity extends Activity {
     private class Bridge {
         @JavascriptInterface
         public void scrape(final String id, final String url, final String script) {
-            handler.post(new Runnable() {
-                @Override public void run() { startScrape(id, url, script); }
-            });
+            // короткие ссылки Ozon (/t/...) сначала раскрываем в канонический адрес
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    final String target = resolveShortLink(url);
+                    handler.post(new Runnable() {
+                        @Override public void run() { startScrape(id, target, script); }
+                    });
+                }
+            }).start();
         }
 
         @JavascriptInterface
