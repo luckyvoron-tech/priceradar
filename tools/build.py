@@ -131,7 +131,7 @@ def main():
     if not password:
         raise SystemExit("Не найден пароль ключа: задайте PRICERADAR_KS_PASS или dist/keystore.properties")
 
-    final = os.path.join(BUILD, "PriceRadar-2.4.apk")
+    final = os.path.join(BUILD, "PriceRadar-2.5.apk")
     run([os.path.join(BT, "apksigner.bat"), "sign",
          "--ks", ks, "--ks-pass", "pass:" + password, "--key-pass", "pass:" + password,
          "--v1-signing-enabled", "true", "--v2-signing-enabled", "true",
@@ -142,7 +142,7 @@ def main():
     log("=== сведения о пакете ===")
     run([os.path.join(BT, "aapt2.exe"), "dump", "badging", final])
 
-    dst = os.path.join(dist, "PriceRadar-2.4.apk")
+    dst = os.path.join(dist, "PriceRadar-2.5.apk")
     shutil.copy2(final, dst)
     shutil.copy2(final, os.path.join(dist, "PriceRadar.apk"))
     log("ГОТОВО: %s (%.1f МБ)" % (dst, os.path.getsize(dst) / 1e6))

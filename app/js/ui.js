@@ -88,15 +88,13 @@ const UI = (() => {
     if (btn) btn.classList.add("active");
     if (name === "tracks") renderTracks();
     if (name === "wish") renderWish();
-    if (name === "help") loadCashback();
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ---------- карточки ----------
   function card(o, opts) {
     opts = opts || {};
-    const cb = Store.cashbackFor(o.marketplace);
-    const eff = Match.effectivePrice(o.price, cb);
     const best = !!opts.best;
     const seed = !!opts.seed;
     const img = /^https?:\/\//.test(o.image || "")
@@ -104,15 +102,12 @@ const UI = (() => {
     const stars = o.rating ? ` · ⭐ ${Number(o.rating).toFixed(1)}` : "";
     const word = o.offerCount === 2 || o.offerCount === 3 || o.offerCount === 4 ? "предложения" : "предложений";
     const offers = o.offerCount > 1 ? ` · ${o.offerCount} ${word}` : "";
-    const effLine = cb && Math.abs(eff - o.price) >= 1
-      ? `<div class="meta">со скидкой по карте ${cb}%: <b>${fmt(eff)}</b></div>` : "";
     const old = o.oldPrice && o.oldPrice > o.price
       ? `<span class="old-price">${fmt(o.oldPrice)}</span>` : "";
     return `<article class="card ${best ? "best" : ""}">${img}
       <div class="body">
         <div class="title">${esc(o.title)}</div>
         <div class="price ${best ? "best" : ""}">${fmt(o.price)}${old}</div>
-        ${effLine}
         <div class="meta"><span class="badge platform">${esc(label(o.marketplace))}</span>${stars}${offers}</div>
         ${best ? '<span class="badge cheap">лучшая цена</span>' : ""}
       </div>
@@ -182,7 +177,7 @@ const UI = (() => {
   }
 
   function renderResults(seed, res) {
-    const eff = (o) => Match.effectivePrice(o.price, Store.cashbackFor(o.marketplace));
+    const eff = (o) => o.price;
     const same = (res.same || []).slice().sort((a, b) => eff(a) - eff(b));
     const similar = res.similar || [];
     if (!same.length) {
@@ -607,25 +602,6 @@ const UI = (() => {
     };
   }
 
-  // ---------- кэшбэк ----------
-  function loadCashback() {
-    const cb = Store.getCashback();
-    document.querySelectorAll(".cb").forEach((inp) => {
-      inp.value = cb[inp.dataset.mp] || "";
-    });
-  }
-
-  function saveCashback() {
-    const map = {};
-    document.querySelectorAll(".cb").forEach((inp) => {
-      const v = parseFloat(inp.value);
-      if (v > 0) map[inp.dataset.mp] = v;
-    });
-    Store.setCashback(map);
-    toast("Скидка сохранена");
-    if (state.last) renderResults(state.last.seed, state.last.res);
-  }
-
   // ---------- профиль ----------
   function shareApp() {
     const text = "PriceRadar — сравниваю цены на Wildberries, Яндекс Маркете и М.Косметик. " +
@@ -671,7 +647,7 @@ const UI = (() => {
       renderWish();
       toast("Добавлено в список желаний 💜");
     });
-    $("cb-save").addEventListener("click", saveCashback);
+
     $("magnit-setup").addEventListener("click", openMagnitSetup);
     document.querySelectorAll("[data-platform]").forEach((input) => {
       input.addEventListener("change", () => {
@@ -703,7 +679,7 @@ const UI = (() => {
     if (!Store.geo() && window.AndroidBridge && window.AndroidBridge.detectGeo) {
       setTimeout(() => { if (!Store.geo()) detectGeo(); }, 1200);
     }
-    loadCashback();
+
     renderWish();
     renderHistory();
     setTimeout(checkUpdate, 1500);
