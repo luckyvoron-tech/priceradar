@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#FFF9F4">
-  <meta name="description" content="PriceRadar — сравнение цен на Wildberries, Яндекс Маркете и М.Косметик. Без регистрации, данные на телефоне.">
+  <meta name="description" content="PriceRadar — сравнение цен на Wildberries, Яндекс Маркете, М.Косметик и Детском мире. Без регистрации, данные на телефоне.">
   <title>PriceRadar — цены без лишнего</title>
   <link rel="stylesheet" href="app.css">
 </head>
@@ -22,7 +22,7 @@
   <section class="hero">
     <p class="eyebrow">Сравнение цен</p>
     <h1>Один товар.<br><span>Все цены.</span></h1>
-    <p class="hero-sub">Wildberries, Яндекс Маркет и М.Косметик — в одном поиске. Без регистрации и лишних покупок.</p>
+    <p class="hero-sub">Wildberries, Яндекс Маркет, М.Косметик и Детский мир — в одном поиске. Без регистрации и лишних покупок.</p>
   </section>
 
   <div id="update" class="update hidden">
@@ -66,14 +66,14 @@
       <div id="search-empty" class="empty-state">
         <div class="empty-orbit" aria-hidden="true"><span>₽</span></div>
         <h2>Начните с одного товара</h2>
-        <p>Покажу цены на трёх площадках, выгоду и где выгоднее купить сейчас.</p>
+        <p>Покажу цены на четырёх площадках, выгоду и где выгоднее купить сейчас.</p>
         <div class="trust-grid">
           <div class="trust-item"><b>0 ₽</b><span>без подписки</span></div>
           <div class="trust-item"><b>Локально</b><span>данные на телефоне</span></div>
-          <div class="trust-item"><b>3</b><span>площадки</span></div>
+          <div class="trust-item"><b>4</b><span>площадки</span></div>
         </div>
         <div class="benefits">
-          <div><span>🔎</span><p><b>Сравнение</b>WB, Яндекс и М.Косметик</p></div>
+          <div><span>🔎</span><p><b>Сравнение</b>WB, Яндекс, М.Косметик и Детский мир</p></div>
           <div><span>🔔</span><p><b>Слежение</b>сообщу о снижении</p></div>
           <div><span>💜</span><p><b>Список</b>правило 24 часов</p></div>
         </div>
@@ -126,6 +126,7 @@
           <label>Wildberries <input class="cb" data-mp="wildberries" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
           <label>Яндекс Маркет <input class="cb" data-mp="ymarket" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
           <label>М.Косметик <input class="cb" data-mp="magnit" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
+          <label>Детский мир <input class="cb" data-mp="detmir" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
         </div>
         <button id="cb-save" class="secondary-btn wide">Сохранить</button>
       </div>
@@ -138,6 +139,8 @@
 
       <div class="info-card faq">
         <h3>Частые вопросы</h3>
+        <details><summary>Почему нет Магнит Маркета?</summary>
+          <p>Магнит Маркет закрыл основную витрину 6 сентября 2026 года. Из группы Магнит остаётся М.Косметик — его и сравниваем.</p></details>
         <details><summary>Почему в сравнении нет Ozon?</summary>
           <p>Ozon блокирует автоматические запросы из приложения, поэтому сравнение временно недоступно. Ссылку на Ozon можно открыть — цена будет на сайте площадки.</p></details>
         <details><summary>Почему нет Мегамаркета?</summary>
@@ -185,7 +188,7 @@
     <h2>Цены без лишнего</h2>
     <p>Один поиск — и видно, где тот же товар дешевле. Без аккаунта, рекламы и сбора данных.</p>
     <ul class="onb-list">
-      <li><b>Сравнение</b> Wildberries, Яндекс Маркет, М.Косметик</li>
+      <li><b>Сравнение</b> Wildberries, Яндекс Маркет, М.Косметик, Детский мир</li>
       <li><b>Слежение</b> за ценой и уведомления</li>
       <li><b>Список желаний</b> с правилом 24 часов</li>
     </ul>
@@ -194,7 +197,21 @@
   </div>
 </div>
 
-<!-- Правило 24 часов -->
+'
+<!-- Цена-цель -->
+<div id="target-modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="onb-emoji">🎯</div>
+    <h2>Цена-цель</h2>
+    <p id="target-desc">Сообщу, когда цена опустится до этой суммы.</p>
+    <input id="target-input" type="number" inputmode="numeric" min="1" placeholder="Например, 55000" style="width:100%;padding:14px;border:1.5px solid #EEE5DD;border-radius:14px;font-size:18px;text-align:center;">
+    <div class="row">
+      <button id="target-save" class="primary-btn">Сохранить</button>
+      <button id="target-cancel" class="ghost-btn">Отмена</button>
+    </div>
+  </div>
+</div>
+'<!-- Правило 24 часов -->
 <div id="wish-modal" class="modal hidden">
   <div class="modal-card">
     <div class="onb-emoji">⏳</div>

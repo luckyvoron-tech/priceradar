@@ -6,9 +6,10 @@ const UI = (() => {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 
-  const LABELS = { wildberries: "Wildberries", ozon: "Ozon", ymarket: "Яндекс Маркет", magnit: "М.Косметик" };
+  const LABELS = { wildberries: "Wildberries", ozon: "Ozon", ymarket: "Яндекс Маркет", magnit: "М.Косметик", detmir: "Детский мир" };
   const COSMETIC_RE = /крем|космет|маск|шампун|помад|туш|парфюм|духи|сыворот|гель|лак|пудр|тональн|уход|бальзам|скраб|дезодор|зубн|мыло|кондиционер|макияж|блеск|карандаш|тени|румяна|хайлайтер|мицелляр|патч|маникюр|педикюр|парфюмер/i;
   const state = { last: null, busy: false, lastQuery: "", lastUrl: "" };
+  let targetId = null;
 
   function toast(text) {
     const el = $("toast");
@@ -63,6 +64,8 @@ const UI = (() => {
     const img = /^https?:\/\//.test(o.image || "")
       ? `<img class="thumb" src="${esc(o.image)}" loading="lazy" alt="" onerror="this.style.display='none'">` : "";
     const stars = o.rating ? ` · ⭐ ${Number(o.rating).toFixed(1)}` : "";
+    const word = o.offerCount === 2 || o.offerCount === 3 || o.offerCount === 4 ? "предложения" : "предложений";
+    const offers = o.offerCount > 1 ? ` · ${o.offerCount} ${word}` : "";
     const effLine = cb && Math.abs(eff - o.price) >= 1
       ? `<div class="meta">с кэшбэком ${cb}%: <b>${fmt(eff)}</b></div>` : "";
     const old = o.oldPrice && o.oldPrice > o.price
@@ -72,7 +75,7 @@ const UI = (() => {
         <div class="title">${esc(o.title)}</div>
         <div class="price ${best ? "best" : ""}">${fmt(o.price)}${old}</div>
         ${effLine}
-        <div class="meta"><span class="badge platform">${esc(label(o.marketplace))}</span>${stars}</div>
+        <div class="meta"><span class="badge platform">${esc(label(o.marketplace))}</span>${stars}${offers}</div>
         ${best ? '<span class="badge cheap">лучшая цена</span>' : ""}
       </div>
       <div class="actions">
@@ -348,8 +351,10 @@ const UI = (() => {
             <div class="title">${esc(t.title)}</div>
             <div class="price">${fmt(t.lastPrice)}</div>
             <div class="meta">${esc(label(t.marketplace))}</div>
+            ${t.target ? `<div class="meta">🎯 цель ${fmt(t.target)}</div>` : ""}
           </div>
           <div class="track-actions">
+            <button class="mini-btn" data-tact="target" data-id="${esc(t.id)}">🎯</button>
             <button class="mini-btn" data-tact="open" data-id="${esc(t.id)}">↗</button>
             <button class="mini-btn danger" data-tact="del" data-id="${esc(t.id)}">✕</button>
           </div>
@@ -363,10 +368,30 @@ const UI = (() => {
         const id = b.getAttribute("data-id");
         const t = Store.tracks().find((x) => x.id === id);
         if (!t) return;
-        if (b.getAttribute("data-tact") === "open") openOffer(t.url, t.marketplace);
+        const act = b.getAttribute("data-tact");
+        if (act === "open") openOffer(t.url, t.marketplace);
+        else if (act === "target") openTarget(t);
         else { Store.removeTrack(id); renderTracks(); toast("Убрано из отслеживания"); }
       });
     });
+  }
+
+  function openTarget(t) {
+    targetId = t.id;
+    $("target-input").value = t.target || "";
+    $("target-desc").textContent = t.title.slice(0, 90);
+    $("target-modal").classList.remove("hidden");
+    setTimeout(() => $("target-input").focus(), 50);
+  }
+
+  function saveTarget() {
+    if (!targetId) return;
+    const v = parseInt($("target-input").value, 10);
+    Store.setTarget(targetId, v);
+    targetId = null;
+    $("target-modal").classList.add("hidden");
+    renderTracks();
+    toast(v > 0 ? "Цель сохранена — сообщу, когда цена дойдёт" : "Цель убрана");
   }
 
   async function refreshTracks(quiet) {
@@ -383,8 +408,9 @@ const UI = (() => {
         if (o && o.price) {
           const r = Store.updateTrack(t.id, o.price);
           ok++;
-          if (r && r.price < r.old - 1 && window.AndroidBridge && window.AndroidBridge.notify) {
-            window.AndroidBridge.notify("Цена снизилась 💜",
+          const hitTarget = !!(t.target && r && r.price <= t.target);
+          if (r && (r.price < r.old - 1 || hitTarget) && window.AndroidBridge && window.AndroidBridge.notify) {
+            window.AndroidBridge.notify(hitTarget ? "Цена достигла цели 🎯" : "Цена снизилась 💜",
               `${t.title.slice(0, 60)}\n${fmt(r.old)} → ${fmt(r.price)}`);
           }
         } else {
@@ -526,6 +552,8 @@ const UI = (() => {
     });
     $("cb-save").addEventListener("click", saveCashback);
     $("magnit-setup").addEventListener("click", openMagnitSetup);
+    $("target-save").addEventListener("click", saveTarget);
+    $("target-cancel").addEventListener("click", () => { targetId = null; $("target-modal").classList.add("hidden"); });
     $("magnit-hint-btn").addEventListener("click", openMagnitSetup);
     $("share-app").addEventListener("click", shareApp);
     $("open-issues").addEventListener("click", () => openUrl((window.APP_CONFIG && APP_CONFIG.issues) || "https://github.com/luckyvoron-tech/priceradar/issues"));

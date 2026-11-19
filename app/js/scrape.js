@@ -277,6 +277,54 @@ const Scrape = (() => {
   }
 
   // ---------- карточка по ссылке ----------
+  // ---------- Детский мир (detmir.ru) ----------
+  async function detmirSearchExtractor(q) {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (/Antibot|Подтвердите|нет соединения/i.test(document.title)) await sleep(2000);
+    const groups = new Map();
+    for (const a of document.querySelectorAll('a[href*="/product/index/id/"]')) {
+      const href = (a.href || "").split("?")[0];
+      if (!href) continue;
+      if (!groups.has(href)) groups.set(href, []);
+      groups.get(href).push(a);
+    }
+    const out = [];
+    for (const [href, anchors] of groups) {
+      let box = anchors[0];
+      let text = "";
+      for (let i = 0; i < 7 && box; i++) {
+        text = box.innerText || "";
+        if (/\d[\d\s\u2009\u202f]{2,}\s*₽/.test(text)) break;
+        box = box.parentElement;
+      }
+      const pm = text.match(/(\d[\d\s\u2009\u202f]{2,})\s*₽/);
+      if (!pm) continue;
+      let title = "";
+      for (const a of anchors) {
+        const t = (a.innerText || "").replace(/\s+/g, " ").trim();
+        if (t.length > title.length && /[a-zа-яё]/i.test(t)) title = t;
+      }
+      const img = box ? box.querySelector("img") : null;
+      if (!title && img) title = (img.alt || "").trim();
+      if (title.length < 5) continue;
+      const idm = href.match(/\/id\/(\d+)/);
+      out.push({
+        marketplace: "detmir",
+        title: title.slice(0, 140),
+        price: Number(pm[1].replace(/[^\d]/g, "")),
+        url: href,
+        image: img ? (img.currentSrc || img.src || "") : "",
+        rating: 0,
+        reviews: 0,
+        brand: "",
+        article: idm ? idm[1] : "",
+      });
+      if (out.length >= 24) break;
+    }
+    if (!out.length) throw new Error("Детский мир: нет данных (капча или пустая выдача)");
+    return out;
+  }
+
   async function productExtractor() {
     const host = location.hostname;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -365,6 +413,24 @@ const Scrape = (() => {
       };
     }
 
+    if (host.includes("detmir")) {
+      const p = ldProduct();
+      if (p && p.price) return Object.assign({ marketplace: "detmir" }, p);
+      const og = document.querySelector('meta[property="og:title"]');
+      const text = document.body ? document.body.innerText : "";
+      const m = text.match(/(\d[\d\s\u2009\u202f]{2,})\s*₽/);
+      if (og && m) {
+        return {
+          marketplace: "detmir",
+          title: og.content.replace(/\s+/g, " ").trim(),
+          price: Number(m[1].replace(/[^\d]/g, "")),
+          url: location.href.split("?")[0],
+          image: "", rating: 0, reviews: 0, brand: "", article: "",
+        };
+      }
+      throw new Error("Детский мир не отдал карточку");
+    }
+
     if (host.includes("magnit")) {
       const p = ldProduct();
       if (p && p.price) return Object.assign({ marketplace: "magnit" }, p);
@@ -390,6 +456,7 @@ const Scrape = (() => {
 
   // ---------- площадки ----------
   const COSMETIC_RE = /крем|космет|маск|шампун|помад|туш|парфюм|духи|сыворот|гель|лак|пудр|тональн|уход|бальзам|скраб|дезодор|зубн|мыло|кондиционер|макияж|блеск|карандаш|тени|румяна|хайлайтер|мицелляр|патч|маникюр|педикюр|парфюмер/i;
+  const KIDS_RE = /дет|ребен|малыш|игруш|коляск|подгуз|lego|конструктор|школ|бутылоч|соск|ванн|автокресл|слинг|ходун|развива|творчеств|настольн|кукл|машинк|самокат|велосипед|санк|комбинезон|боди|пижам|ползунк|рюкзак|пенал|пластилин|краск|пазл|робот/i;
 
   const OZON_COMPARE = !(window.APP_CONFIG && window.APP_CONFIG.ozonCompare === false);
   const PLATFORMS = [
@@ -414,6 +481,13 @@ const Scrape = (() => {
       page: (q) => "https://cosmetic.magnit.ru/search/?text=" + encodeURIComponent(q),
       search: magnitSearchExtractor,
     },
+    {
+      key: "detmir", label: "Детский мир", beta: true,
+      when: (seed) => KIDS_RE.test(String(seed.title || "")),
+      page: (q) => "https://www.detmir.ru/search/results/?qt=" + encodeURIComponent(q)
+        + "&searchType=auto&searchMode=common&canRefine=true",
+      search: detmirSearchExtractor,
+    },
   ];
 
   function marketplaceOf(url) {
@@ -423,6 +497,7 @@ const Scrape = (() => {
       if (h.endsWith("ozon.ru")) return "ozon";
       if (h.endsWith("market.yandex.ru")) return "ymarket";
       if (h.endsWith("cosmetic.magnit.ru") || h === "magnit.ru") return "magnit";
+      if (h.endsWith("detmir.ru")) return "detmir";
     } catch (e) {}
     return null;
   }
@@ -474,12 +549,15 @@ const Scrape = (() => {
     }
     // лучшее предложение каждой площадки
     const best = {};
+    const counts = {};
     for (const o of same) {
+      counts[o.marketplace] = (counts[o.marketplace] || 0) + 1;
       const cur = best[o.marketplace];
       const price = o.price;
       if (!cur || price < cur.price) best[o.marketplace] = o;
     }
     const sameList = Object.values(best).sort((a, b) => a.price - b.price);
+    sameList.forEach((o) => { o.offerCount = counts[o.marketplace] || 1; });
     similar.sort((a, b) => Match.valueRank(b.price, b.rating, b.reviews) -
                           Match.valueRank(a.price, a.rating, a.reviews));
     return { same: sameList, similar: similar.slice(0, 6), errors, statuses };

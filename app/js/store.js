@@ -64,6 +64,15 @@ const Store = (() => {
     save();
   }
 
+  function setTarget(id, price) {
+    const t = data.tracks.find((x) => x.id === id);
+    if (!t) return null;
+    const v = Math.round(Number(price) || 0);
+    t.target = v > 0 ? v : null;
+    save();
+    return t;
+  }
+
   function updateTrack(id, price) {
     const t = data.tracks.find((x) => x.id === id);
     if (!t) return null;
@@ -172,7 +181,7 @@ const Store = (() => {
   function markOnboarding() { data.onboarding = true; save(); }
 
   return {
-    load, save, tracks, addTrack, removeTrack, updateTrack,
+    load, save, tracks, addTrack, removeTrack, updateTrack, setTarget,
     wish, addWish, wishDone, wishKeep, wishDue, wishMarkReminded,
     setCashback, getCashback, cashbackFor,
     cacheGet, cacheSet, seenOnboarding, markOnboarding, loadError: () => loadError,
