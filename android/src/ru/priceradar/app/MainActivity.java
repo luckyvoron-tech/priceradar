@@ -34,8 +34,10 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -170,6 +172,26 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (webView != null) webView.saveState(outState);
+    }
+
+    private String httpGet(String rawUrl) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(rawUrl).openConnection();
+        c.setConnectTimeout(8000);
+        c.setReadTimeout(8000);
+        c.setRequestProperty("User-Agent", MOBILE_UA);
+        c.setRequestProperty("Accept", "application/json, text/plain, */*");
+        int code = c.getResponseCode();
+        if (code < 200 || code >= 300) {
+            c.disconnect();
+            throw new Exception("HTTP " + code);
+        }
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(c.getInputStream(), "UTF-8"))) {
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line);
+        }
+        c.disconnect();
+        return sb.toString();
     }
 
     private String resolveShortLink(String url) {
@@ -429,6 +451,48 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void detectGeo() {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    String out;
+                    try {
+                        JSONObject ip = new JSONObject(httpGet("https://ipwho.is/"));
+                        if (!ip.optBoolean("success", true)) throw new Exception("geo");
+                        double lat = ip.optDouble("latitude", 0);
+                        double lon = ip.optDouble("longitude", 0);
+                        JSONObject g = new JSONObject();
+                        g.put("ok", true);
+                        g.put("city", ip.optString("city", ""));
+                        g.put("region", ip.optString("region", ""));
+                        g.put("country", ip.optString("country_code", ""));
+                        g.put("lat", lat);
+                        g.put("lon", lon);
+                        try {
+                            JSONObject wb = new JSONObject(httpGet(
+                                "https://user-geo-data.wildberries.ru/get-geo-info?currency=RUB&latitude="
+                                + lat + "&longitude=" + lon));
+                            g.put("dest", wb.optString("dest", ""));
+                            g.put("address", wb.optString("address", ""));
+                        } catch (Exception ignored) { }
+                        out = g.toString();
+                    } catch (Exception e) {
+                        out = "{\"ok\":false,\"error\":\"Не удалось определить город\"}";
+                    }
+                    final String payload = out;
+                    handler.post(new Runnable() {
+                        @Override public void run() {
+                            if (destroyed || webView == null) return;
+                            try {
+                                webView.evaluateJavascript(
+                                    "window.__prGeo&&window.__prGeo(" + JSONObject.quote(payload) + ")", null);
+                            } catch (Exception ignored) { }
+                        }
+                    });
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
         public String version() {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -564,8 +628,10 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SETUP_REQUEST && resultCode == RESULT_OK && webView != null) {
+            String store = data != null ? data.getStringExtra("store") : "";
             try {
-                webView.evaluateJavascript("window.__prSetupDone&&window.__prSetupDone()", null);
+                webView.evaluateJavascript("window.__prSetupDone&&window.__prSetupDone("
+                    + JSONObject.quote(store == null ? "" : store) + ")", null);
             } catch (Exception ignored) { }
         }
         if (requestCode == CHECK_REQUEST && resultCode == RESULT_OK && webView != null) {

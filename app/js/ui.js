@@ -11,6 +11,44 @@ const UI = (() => {
   const state = { last: null, busy: false, lastQuery: "", lastUrl: "" };
   let targetId = null;
 
+  const CITIES = [
+    { name: "Москва", lr: 213, a: ["moscow", "moskva"] },
+    { name: "Санкт-Петербург", lr: 2, a: ["saint petersburg", "sankt-peterburg", "spb"] },
+    { name: "Новосибирск", lr: 65, a: ["novosibirsk"] },
+    { name: "Екатеринбург", lr: 54, a: ["yekaterinburg", "ekaterinburg"] },
+    { name: "Казань", lr: 43, a: ["kazan"] },
+    { name: "Нижний Новгород", lr: 47, a: ["nizhny novgorod", "nizhniy novgorod"] },
+    { name: "Челябинск", lr: 56, a: ["chelyabinsk"] },
+    { name: "Самара", lr: 51, a: ["samara"] },
+    { name: "Омск", lr: 66, a: ["omsk"] },
+    { name: "Ростов-на-Дону", lr: 39, a: ["rostov-on-don", "rostov"] },
+    { name: "Уфа", lr: 172, a: ["ufa"] },
+    { name: "Красноярск", lr: 62, a: ["krasnoyarsk"] },
+    { name: "Воронеж", lr: 193, a: ["voronezh"] },
+    { name: "Пермь", lr: 50, a: ["perm"] },
+    { name: "Волгоград", lr: 38, a: ["volgograd"] },
+    { name: "Краснодар", lr: 35, a: ["krasnodar"] },
+    { name: "Саратов", lr: 194, a: ["saratov"] },
+    { name: "Тюмень", lr: 55, a: ["tyumen"] },
+    { name: "Владивосток", lr: 75, a: ["vladivostok"] },
+    { name: "Хабаровск", lr: 76, a: ["khabarovsk"] },
+    { name: "Иркутск", lr: 63, a: ["irkutsk"] },
+    { name: "Сочи", lr: 239, a: ["sochi"] },
+    { name: "Калининград", lr: 22, a: ["kaliningrad"] },
+    { name: "Томск", lr: 67, a: ["tomsk"] },
+    { name: "Барнаул", lr: 197, a: ["barnaul"] },
+    { name: "Кемерово", lr: 64, a: ["kemerovo"] },
+    { name: "Ярославль", lr: 16, a: ["yaroslavl"] },
+    { name: "Тверь", lr: 14, a: ["tver"] },
+  ];
+
+  function cityByName(raw) {
+    const s = String(raw || "").toLowerCase().trim();
+    if (!s) return null;
+    return CITIES.find((c) => c.name.toLowerCase() === s || (c.a || []).some((a) => s.indexOf(a) >= 0)) || null;
+  }
+
+
   function toast(text) {
     const el = $("toast");
     if (!el) return;
@@ -310,6 +348,80 @@ const UI = (() => {
     btn.classList.toggle("hidden", !input.value);
   }
 
+  // ---------- город ----------
+  function renderGeo() {
+    const el = $("geo-city");
+    const g = Store.geo();
+    if (!el) return;
+    el.textContent = g && g.city ? g.city : "Указать город";
+    const btn = $("geo-btn");
+    if (btn) btn.title = g && g.city ? "Цены для: " + g.city : "Выбрать город";
+  }
+
+  function applyGeo(g, source) {
+    if (!g || (!g.city && !g.region)) return false;
+    const known = cityByName(g.city) || cityByName(g.region);
+    Store.setGeo({
+      city: known ? known.name : String(g.city || g.region || "").slice(0, 60),
+      lr: known ? known.lr : (g.lr || null),
+      dest: g.dest || null,
+      lat: g.lat || null,
+      lon: g.lon || null,
+      source: source || "auto",
+    });
+    renderGeo();
+    return true;
+  }
+
+  function detectGeo() {
+    if (!(window.AndroidBridge && window.AndroidBridge.detectGeo)) {
+      toast("Определение города доступно в приложении на телефоне");
+      return;
+    }
+    const el = $("geo-city");
+    if (el) el.textContent = "Определяю…";
+    try { window.AndroidBridge.detectGeo(); } catch (e) { renderGeo(); }
+  }
+
+  function openGeo() {
+    const list = $("geo-list");
+    if (list) {
+      list.innerHTML = CITIES.map((c) =>
+        `<button data-city="${esc(c.name)}">${esc(c.name)}</button>`).join("");
+      list.querySelectorAll("[data-city]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const c = CITIES.find((x) => x.name === b.getAttribute("data-city"));
+          if (!c) return;
+          Store.setGeo({ city: c.name, lr: c.lr, dest: null, source: "manual" });
+          renderGeo();
+          $("geo-modal").classList.add("hidden");
+          toast("Город: " + c.name);
+        });
+      });
+    }
+    const g = Store.geo();
+    $("geo-desc").textContent = g && g.city
+      ? "Сейчас: " + g.city + ". Цены будут пересчитаны для выбранного города."
+      : "Город нужен, чтобы площадки показывали цены и наличие для вашего региона.";
+    $("geo-modal").classList.remove("hidden");
+  }
+
+  function renderMagnitState() {
+    const state = $("magnit-state");
+    const btn = $("magnit-setup");
+    if (!state || !btn) return;
+    if (Store.magnitStore()) {
+      const name = Store.magnitName();
+      state.textContent = name ? "Выбран: " + name : "Магазин выбран ✓";
+      state.classList.add("ok");
+      btn.textContent = "Изменить магазин";
+    } else {
+      state.textContent = "Магазин не выбран";
+      state.classList.remove("ok");
+      btn.textContent = "Выбрать магазин";
+    }
+  }
+
   // ---------- треки ----------
   function sparkline(history) {
     if (!history || history.length < 2) return "";
@@ -552,6 +664,9 @@ const UI = (() => {
     });
     $("cb-save").addEventListener("click", saveCashback);
     $("magnit-setup").addEventListener("click", openMagnitSetup);
+    $("geo-btn").addEventListener("click", openGeo);
+    $("geo-cancel").addEventListener("click", () => $("geo-modal").classList.add("hidden"));
+    $("geo-detect").addEventListener("click", () => { $("geo-modal").classList.add("hidden"); detectGeo(); });
     $("target-save").addEventListener("click", saveTarget);
     $("target-cancel").addEventListener("click", () => { targetId = null; $("target-modal").classList.add("hidden"); });
     $("magnit-hint-btn").addEventListener("click", openMagnitSetup);
@@ -566,6 +681,11 @@ const UI = (() => {
     $("about-version").textContent = (window.APP_CONFIG && APP_CONFIG.version) || "2.0";
     const disc = $("affiliate-disclosure");
     if (disc && window.Affiliate) disc.textContent = Affiliate.disclosure();
+    renderGeo();
+    renderMagnitState();
+    if (!Store.geo() && window.AndroidBridge && window.AndroidBridge.detectGeo) {
+      setTimeout(() => { if (!Store.geo()) detectGeo(); }, 1200);
+    }
     loadCashback();
     renderWish();
     renderHistory();
@@ -582,8 +702,20 @@ const UI = (() => {
     if (q) doSearch(q);
   };
 
-  window.__prSetupDone = function () {
-    Store.setMagnitStore();
+  window.__prGeo = function (raw) {
+    let g = null;
+    try { g = JSON.parse(String(raw || "")); } catch (e) {}
+    if (!g || !g.ok) {
+      renderGeo();
+      return;
+    }
+    if (applyGeo(g, "ip")) toast("Цены для города: " + Store.geo().city);
+    else renderGeo();
+  };
+
+  window.__prSetupDone = function (name) {
+    Store.setMagnitStore(name || "");
+    renderMagnitState();
     const hint = $("magnit-hint");
     if (hint) hint.classList.add("hidden");
     toast("Магазин М.Косметик выбран");

@@ -10,6 +10,8 @@ const Store = (() => {
     history: [],
     dismissedUpdate: "",
     magnitStore: false,
+    magnitName: "",
+    geo: null,
   });
 
   let data = defaultData();
@@ -155,7 +157,16 @@ const Store = (() => {
   function dismissedUpdate() { return data.dismissedUpdate || ""; }
 
   function magnitStore() { return !!data.magnitStore; }
-  function setMagnitStore() { data.magnitStore = true; save(); }
+  function magnitName() { return data.magnitName || ""; }
+  function setMagnitStore(name) {
+    data.magnitStore = true;
+    if (name) data.magnitName = String(name).slice(0, 120);
+    save();
+  }
+
+  // --- город/регион ---
+  function geo() { return data.geo || null; }
+  function setGeo(g) { data.geo = g || null; save(); }
 
   // --- кэш поиска ---
   function cacheGet(key, ttlMs = 20 * 60 * 1000) {
@@ -185,6 +196,6 @@ const Store = (() => {
     wish, addWish, wishDone, wishKeep, wishDue, wishMarkReminded,
     setCashback, getCashback, cashbackFor,
     cacheGet, cacheSet, seenOnboarding, markOnboarding, loadError: () => loadError,
-    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate, magnitStore, setMagnitStore,
+    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate, magnitStore, magnitName, setMagnitStore, geo, setGeo,
   };
 })();

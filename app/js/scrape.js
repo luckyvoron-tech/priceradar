@@ -54,7 +54,10 @@ const Scrape = (() => {
   }
 
   // ---------- Wildberries ----------
-  async function wbSearchExtractor(q) {
+  async function wbSearchExtractor(qOrOpts) {
+    const opts = (qOrOpts && typeof qOrOpts === "object") ? qOrOpts : {};
+    const q = String((qOrOpts && typeof qOrOpts === "object") ? qOrOpts.q : qOrOpts || "");
+    const geoDest = opts.dest || null;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     if (/Подозрительная|доступ.*запрещ/i.test(document.title)) await sleep(1500);
     const headers = {
@@ -74,13 +77,14 @@ const Scrape = (() => {
       if (!r.ok) throw new Error("WB " + r.status);
       return r.json();
     }
+    const fallbackDest = geoDest || -1257786;
     let j;
-    try { j = await load(null); } catch (e) { j = await load(-1257786); }
+    try { j = await load(geoDest); } catch (e) { j = await load(fallbackDest); }
     let products = (j.products || []).slice(0, 24);
     const hasPrices = (arr) => arr.some((p) => (p.sizes || []).some((s) => s.price && s.price.product));
     if (!hasPrices(products)) {
       await sleep(2000);
-      try { j = await load(-1257786); products = (j.products || []).slice(0, 24); } catch (e) {}
+      try { j = await load(fallbackDest); products = (j.products || []).slice(0, 24); } catch (e) {}
     }
     if (!products.length) throw new Error("Wildberries ничего не нашёл");
     function img(nm) {
@@ -325,7 +329,9 @@ const Scrape = (() => {
     return out;
   }
 
-  async function productExtractor() {
+  async function productExtractor(args) {
+    args = args || {};
+    const geoDest = args.dest || null;
     const host = location.hostname;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     for (let i = 0; i < 7 && /Antibot|Подтвердите|нет соединения/i.test(document.title); i++) await sleep(1500);
@@ -389,7 +395,7 @@ const Scrape = (() => {
       const nm = (location.pathname.match(/catalog\/(\d+)/) || [])[1];
       if (!price && nm) {
         const u = "https://www.wildberries.ru/__internal/u-card/cards/v4/detail?appType=1&curr=rub"
-          + "&dest=1259570991&mtype=257&lang=ru&ab_testing=false&nm=" + nm;
+          + "&dest=" + (geoDest || "1259570991") + "&mtype=257&lang=ru&ab_testing=false&nm=" + nm;
         const r = await fetch(u, {
           headers: {
             "Accept": "application/json", "x-requested-with": "XMLHttpRequest",
@@ -472,7 +478,10 @@ const Scrape = (() => {
     }] : []),
     {
       key: "ymarket", label: "Яндекс Маркет",
-      page: (q) => "https://market.yandex.ru/search?text=" + encodeURIComponent(q),
+      page: (q) => {
+        const g = (typeof Store !== "undefined" && Store.geo()) ? Store.geo() : null;
+        return "https://market.yandex.ru/search?text=" + encodeURIComponent(q) + (g && g.lr ? "&lr=" + encodeURIComponent(g.lr) : "");
+      },
       search: yandexSearchExtractor,
     },
     {
@@ -504,7 +513,8 @@ const Scrape = (() => {
 
   async function byUrl(url) {
     const expected = marketplaceOf(url);
-    const off = await call(url, productExtractor, {}, 1);
+    const dest = (typeof Store !== "undefined" && Store.geo() ? Store.geo().dest : null);
+    const off = await call(url, productExtractor, { dest: dest }, 1);
     if (expected && off.marketplace && off.marketplace !== expected) {
       throw new Error("Открылась не та площадка");
     }
@@ -515,7 +525,10 @@ const Scrape = (() => {
   async function search(platform, q) {
     const p = PLATFORMS.find((x) => x.key === platform);
     if (!p) return [];
-    const arr = await call(p.page(q), p.search, q);
+    const args = p.key === "wildberries"
+      ? { q: q, dest: (typeof Store !== "undefined" && Store.geo() ? Store.geo().dest : null) }
+      : q;
+    const arr = await call(p.page(q), p.search, args);
     return (arr || []).filter((o) => o && o.price > 0);
   }
 

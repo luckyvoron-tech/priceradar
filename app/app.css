@@ -495,3 +495,23 @@ input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; disp
 /* на внутренних вкладках hero не занимает пол-экрана */
 body:not(.tab-search) .hero { display: none; }
 body:not(.tab-search) main { padding-top: 18px; }
+
+/* ---------- город и состояние магазина ---------- */
+.search-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 2px 8px; }
+.search-top .search-label { margin: 0; }
+.geo-chip {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  border: 1px solid #E7DDFA; background: #F7F2FF; color: var(--primary-deep);
+  border-radius: 999px; padding: 6px 10px; font-size: 11.5px; font-weight: 800;
+  max-width: 48%;
+}
+.geo-chip span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.geo-pin { font-size: 11px; }
+.geo-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 4px; max-height: 210px; overflow: auto; }
+.geo-list button {
+  border: 1px solid #EEE5DD; background: #FFFDFB; color: var(--ink);
+  border-radius: 10px; padding: 9px 8px; font-size: 12px; text-align: left;
+}
+.geo-list button:active { background: var(--primary-soft); }
+.magnit-state { margin: 8px 2px 0; font-size: 12.5px; color: #9A90A8; text-align: center; }
+.magnit-state.ok { color: var(--success); font-weight: 700; }

@@ -35,7 +35,13 @@
     <!-- ПОИСК -->
     <section id="tab-search" class="pane active">
       <div class="search-card">
-        <label class="search-label" for="q">Ссылка на товар или название</label>
+        <div class="search-top">
+          <label class="search-label" for="q">Ссылка на товар или название</label>
+          <button id="geo-btn" class="geo-chip" type="button" aria-label="Город для цен">
+            <span class="geo-pin" aria-hidden="true">◉</span>
+            <span id="geo-city">Указать город</span>
+          </button>
+        </div>
         <div class="searchbox">
           <div class="q-wrap">
             <input id="q" type="search" placeholder="Ссылка или название…" autocomplete="off">
@@ -135,10 +141,13 @@
         <h3>Магазин М.Косметик</h3>
         <p class="hint">Цены и наличие зависят от магазина. Выберите ближайший один раз.</p>
         <button id="magnit-setup" class="secondary-btn wide">Выбрать магазин</button>
+        <p id="magnit-state" class="magnit-state">Магазин не выбран</p>
       </div>
 
       <div class="info-card faq">
         <h3>Частые вопросы</h3>
+        <details><summary>Откуда приложение знает мой город?</summary>
+          <p>При первом запуске город определяется по IP и региону Wildberries. Его можно изменить кнопкой рядом со строкой поиска. GPS не запрашивается.</p></details>
         <details><summary>Почему в сравнении нет Ozon?</summary>
           <p>Ozon блокирует автоматические запросы из приложения, поэтому сравнение временно недоступно. Ссылку на Ozon можно открыть — цена будет на сайте площадки.</p></details>
         <details><summary>Почему нет Мегамаркета?</summary>
@@ -196,6 +205,18 @@
 </div>
 
 '
+<!-- Город -->
+<div id="geo-modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="onb-emoji">📍</div>
+    <h2>Ваш город</h2>
+    <p id="geo-desc">Город нужен, чтобы площадки показывали цены и наличие для вашего региона.</p>
+    <button id="geo-detect" class="secondary-btn wide">Определить автоматически</button>
+    <div id="geo-list" class="geo-list"></div>
+    <button id="geo-cancel" class="ghost-wide">Закрыть</button>
+  </div>
+</div>
+
 <!-- Цена-цель -->
 <div id="target-modal" class="modal hidden">
   <div class="modal-card">

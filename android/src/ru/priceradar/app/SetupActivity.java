@@ -1,10 +1,12 @@
 package ru.priceradar.app;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -12,6 +14,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import org.json.JSONTokener;
 
 /**
  * Видимый WebView для настройки площадки (магазин М.Косметик) и прохождения
@@ -90,8 +93,19 @@ public class SetupActivity extends Activity {
 
         done.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                setResult(RESULT_OK);
-                finish();
+                if (webView == null) { setResult(RESULT_OK); finish(); return; }
+                webView.evaluateJavascript("(function(){try{return document.title||''}catch(e){return ''}})()",
+                    new ValueCallback<String>() {
+                        @Override public void onReceiveValue(String value) {
+                            Intent data = new Intent();
+                            try {
+                                Object title = new JSONTokener(value).nextValue();
+                                if (title != null) data.putExtra("store", String.valueOf(title));
+                            } catch (Exception ignored) { }
+                            setResult(RESULT_OK, data);
+                            finish();
+                        }
+                    });
             }
         });
     }
