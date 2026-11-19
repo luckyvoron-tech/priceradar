@@ -1,0 +1,46 @@
+# PriceRadar — пример Nginx. Замените домен, путь и SSL.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.ru www.example.ru;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name example.ru www.example.ru;
+
+    root /var/www/priceradar;
+    index index.html;
+
+    ssl_certificate     /etc/letsencrypt/live/example.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.ru/privkey.pem;
+
+    charset utf-8;
+    autoindex off;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location = /PriceRadar.apk {
+        default_type application/vnd.android.package-archive;
+        add_header Content-Disposition 'attachment; filename="PriceRadar.apk"';
+        add_header Cache-Control "public, max-age=3600";
+    }
+
+    location ~* \.(css|png|svg|jpg|jpeg|webp)$ {
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+
+    error_page 404 /404.html;
+    location = /404.html {
+        internal;
+    }
+
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header Referrer-Policy strict-origin-when-cross-origin;
+}
