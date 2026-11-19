@@ -12,6 +12,7 @@ const Store = (() => {
     magnitStore: false,
     magnitName: "",
     geo: null,
+    platforms: {},
   });
 
   let data = defaultData();
@@ -168,6 +169,20 @@ const Store = (() => {
   function geo() { return data.geo || null; }
   function setGeo(g) { data.geo = g || null; save(); }
 
+  // --- площадки ---
+  function platformEnabled(mp) {
+    if (!mp) return true;
+    return data.platforms[mp] !== false;
+  }
+  function setPlatformEnabled(mp, on) {
+    if (!mp) return;
+    data.platforms[mp] = !!on;
+    save();
+  }
+  function enabledPlatforms() {
+    return ["wildberries", "ymarket", "magnit", "detmir"].filter(platformEnabled);
+  }
+
   // --- кэш поиска ---
   function cacheGet(key, ttlMs = 20 * 60 * 1000) {
     const hit = data.cache[key];
@@ -196,6 +211,6 @@ const Store = (() => {
     wish, addWish, wishDone, wishKeep, wishDue, wishMarkReminded,
     setCashback, getCashback, cashbackFor,
     cacheGet, cacheSet, seenOnboarding, markOnboarding, loadError: () => loadError,
-    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate, magnitStore, magnitName, setMagnitStore, geo, setGeo,
+    history, addHistory, clearHistory, dismissUpdate, dismissedUpdate, magnitStore, magnitName, setMagnitStore, geo, setGeo, platformEnabled, setPlatformEnabled, enabledPlatforms,
   };
 })();

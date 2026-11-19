@@ -127,8 +127,20 @@
       </div>
 
       <div class="info-card">
-        <h3>Кэшбэк карты</h3>
-        <p class="hint">Укажите процент — покажу цену с учётом кэшбэка.</p>
+        <h3>Где искать</h3>
+        <p class="hint">Отключите площадки, которые вам не нужны. Остальные продолжат сравниваться.</p>
+        <div class="platform-toggles">
+          <label class="toggle-row"><span>Wildberries</span><input type="checkbox" data-platform="wildberries"><i class="switch"></i></label>
+          <label class="toggle-row"><span>Яндекс Маркет</span><input type="checkbox" data-platform="ymarket"><i class="switch"></i></label>
+          <label class="toggle-row"><span>М.Косметик</span><input type="checkbox" data-platform="magnit"><i class="switch"></i></label>
+          <label class="toggle-row"><span>Детский мир</span><input type="checkbox" data-platform="detmir"><i class="switch"></i></label>
+        </div>
+        <p id="platform-count" class="hint" style="margin-top:8px"></p>
+      </div>
+
+      <div class="info-card">
+        <h3>Скидка с картой площадки</h3>
+        <p class="hint">У некоторых площадок цена ниже при оплате их картой. Укажите скидку, если она у вас есть; иначе оставьте 0. Это не универсальный кэшбэк.</p>
         <div class="cashback">
           <label>Wildberries <input class="cb" data-mp="wildberries" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
           <label>Яндекс Маркет <input class="cb" data-mp="ymarket" type="number" min="0" max="90" inputmode="decimal" placeholder="0"></label>
@@ -156,7 +168,7 @@
         <details><summary>Нужен ли VPN?</summary>
           <p>Нет. Наоборот: <b>выключите VPN</b>. С VPN маркетплейсы блокируют запросы, и цены не загрузятся.</p></details>
         <details><summary>Почему цена отличается от сайта?</summary>
-          <p>Цена с картой, кэшбэк и промокоды меняются. Показываю цену на момент запроса; итог с кэшбэком можно настроить выше.</p></details>
+          <p>Цена с картой площадки, промокоды и регион меняются. Показываю цену на момент запроса; скидку по карте можно указать выше.</p></details>
         <details><summary>М.Косметик просит выбрать магазин</summary>
           <p>Нажмите «Выбрать магазин» и укажите ближайший — приложение запомнит выбор.</p></details>
         <details><summary>Где хранятся мои данные?</summary>

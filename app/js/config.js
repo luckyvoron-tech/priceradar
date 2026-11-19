@@ -1,7 +1,7 @@
 /* Настройки приложения. Партнёрские шаблоны заполняются после регистрации
    в Admitad / Яндекс Дистрибуции. Пока шаблон пуст — ссылка открывается напрямую. */
 window.APP_CONFIG = {
-  version: "2.3",
+  version: "2.4",
   repo: "https://github.com/luckyvoron-tech/priceradar",
   issues: "https://github.com/luckyvoron-tech/priceradar/issues",
   // Ozon сравнивается только при наличии серверного партнёрского фида/API.

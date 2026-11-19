@@ -105,7 +105,7 @@ const UI = (() => {
     const word = o.offerCount === 2 || o.offerCount === 3 || o.offerCount === 4 ? "предложения" : "предложений";
     const offers = o.offerCount > 1 ? ` · ${o.offerCount} ${word}` : "";
     const effLine = cb && Math.abs(eff - o.price) >= 1
-      ? `<div class="meta">с кэшбэком ${cb}%: <b>${fmt(eff)}</b></div>` : "";
+      ? `<div class="meta">со скидкой по карте ${cb}%: <b>${fmt(eff)}</b></div>` : "";
     const old = o.oldPrice && o.oldPrice > o.price
       ? `<span class="old-price">${fmt(o.oldPrice)}</span>` : "";
     return `<article class="card ${best ? "best" : ""}">${img}
@@ -406,6 +406,15 @@ const UI = (() => {
     $("geo-modal").classList.remove("hidden");
   }
 
+  function renderPlatformSettings() {
+    document.querySelectorAll("[data-platform]").forEach((input) => {
+      input.checked = Store.platformEnabled(input.getAttribute("data-platform"));
+    });
+    const n = Store.enabledPlatforms().length;
+    const el = $("platform-count");
+    if (el) el.textContent = n ? "Активно площадок: " + n : "Все площадки отключены";
+  }
+
   function renderMagnitState() {
     const state = $("magnit-state");
     const btn = $("magnit-setup");
@@ -613,7 +622,7 @@ const UI = (() => {
       if (v > 0) map[inp.dataset.mp] = v;
     });
     Store.setCashback(map);
-    toast("Кэшбэк сохранён");
+    toast("Скидка сохранена");
     if (state.last) renderResults(state.last.seed, state.last.res);
   }
 
@@ -664,6 +673,13 @@ const UI = (() => {
     });
     $("cb-save").addEventListener("click", saveCashback);
     $("magnit-setup").addEventListener("click", openMagnitSetup);
+    document.querySelectorAll("[data-platform]").forEach((input) => {
+      input.addEventListener("change", () => {
+        Store.setPlatformEnabled(input.getAttribute("data-platform"), input.checked);
+        renderPlatformSettings();
+        toast(input.checked ? "Площадка включена" : "Площадка отключена — применится к следующему поиску");
+      });
+    });
     $("geo-btn").addEventListener("click", openGeo);
     $("geo-cancel").addEventListener("click", () => $("geo-modal").classList.add("hidden"));
     $("geo-detect").addEventListener("click", () => { $("geo-modal").classList.add("hidden"); detectGeo(); });
@@ -683,6 +699,7 @@ const UI = (() => {
     if (disc && window.Affiliate) disc.textContent = Affiliate.disclosure();
     renderGeo();
     renderMagnitState();
+    renderPlatformSettings();
     if (!Store.geo() && window.AndroidBridge && window.AndroidBridge.detectGeo) {
       setTimeout(() => { if (!Store.geo()) detectGeo(); }, 1200);
     }

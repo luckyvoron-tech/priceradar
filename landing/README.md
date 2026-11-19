@@ -15,7 +15,7 @@ og.png                  картинка для соцсетей 1200×630
 screen-home.png         скриншот главного экрана
 screen-results.png      скриншот сравнения
 screen-help.png         скриншот настроек
-PriceRadar.apk          актуальная сборка (2.3)
+PriceRadar.apk          актуальная сборка (2.4)
 robots.txt
 .htaccess               настройки Apache
 nginx.conf.example      пример для Nginx
@@ -98,7 +98,7 @@ Content-Type: application/vnd.android.package-archive
 1. Соберите новую версию: `python tools/build.py`.
 2. Скопируйте `dist/PriceRadar-<версия>.apk` в `landing/PriceRadar.apk`.
 3. Обновите на странице:
-   - версию (сейчас 2.3);
+   - версию (сейчас 2.4);
    - SHA-256 в блоке «Проверить файл». Получить:
      ```bash
      sha256sum PriceRadar.apk

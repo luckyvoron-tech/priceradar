@@ -538,6 +538,10 @@ const Scrape = (() => {
     const errors = {};
     const statuses = {};
     for (const p of PLATFORMS) {
+      if (typeof Store !== "undefined" && !Store.platformEnabled(p.key)) {
+        statuses[p.key] = { label: p.label, state: "disabled" };
+        continue;
+      }
       if (p.when && !p.when(seed)) {
         statuses[p.key] = { label: p.label, state: "skipped" };
         continue;
@@ -597,7 +601,9 @@ const Scrape = (() => {
       }
     }
     const errors = [];
-    for (const p of PLATFORMS) {
+    const active = PLATFORMS.filter((p) => typeof Store === "undefined" || Store.platformEnabled(p.key));
+    if (!active.length) throw new Error("Все площадки отключены — включите их в разделе «Помощь».");
+    for (const p of active) {
       if (p.when && !p.when({ title: query })) continue;
       if (onStep) onStep("Ищу на " + p.label + "…");
       try {
